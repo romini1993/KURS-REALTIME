@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-title" content="CalcKurs">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2454/2454269.png">
     <meta name="theme-color" content="#0f172a">
-    <title>CalcKurs Pro v5 - Style Sync</title>
+    <title>CalcKurs Pro v5 - Anti-Swipe</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -21,7 +21,19 @@
             --down: #f87171;
         }
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: var(--text); margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; }
+        
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            justify-content: center; 
+            min-height: 100vh;
+            /* Pokonya biar ga refresh pas di-swipe kebawah */
+            overscroll-behavior-y: contain; 
+        }
+
         .container { width: 100%; max-width: 400px; padding: env(safe-area-inset-top) 20px 40px 20px; }
         
         /* HEADER STYLE SESUAI APR */
@@ -175,112 +187,4 @@
 
     async function fetchKursDollar() {
         try {
-            const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=idr');
-            const d = await r.json();
-            usdToIdr = d['usd-coin'].idr;
-            document.getElementById('kurs-live').innerText = `USD/IDR: ${new Intl.NumberFormat('id-ID').format(usdToIdr)}`;
-        } catch (e) {
-            document.getElementById('kurs-live').innerText = "Kurs: Offline";
-        }
-    }
-
-    async function fetchCryptoData(s) {
-        try {
-            const r = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${s.toUpperCase()}USDT`);
-            const d = await r.json();
-            if (d.result?.list?.[0]) {
-                const t = d.result.list[0];
-                const last = parseFloat(t.lastPrice);
-                const prev = parseFloat(t.prevPrice24h);
-                return { price: last, change: ((last - prev) / prev) * 100 };
-            }
-        } catch { return { price: 0, change: 0 }; }
-        return { price: 0, change: 0 };
-    }
-
-    async function fetchAllPrices() {
-        document.getElementById('status').innerText = "Updating...";
-        await fetchKursDollar();
-
-        const b1 = await fetchCryptoData('BTC');
-        prices.btc = b1.price; changes.btc = b1.change;
-        updatePriceUI('btc', b1.change);
-
-        const e1 = await fetchCryptoData('ETH');
-        prices.eth = e1.price; changes.eth = e1.change;
-        updatePriceUI('eth', e1.change);
-
-        for (let s of watchlist) {
-            const res = await fetchCryptoData(s);
-            if (res.price > 0) {
-                prices[s] = res.price; changes[s] = res.change;
-            }
-        }
-
-        renderWatchlist();
-        if (lastRawValue !== "0" && lastRawValue !== "") calculateKurs(lastSource);
-        document.getElementById('status').innerText = "Update: " + new Date().toLocaleTimeString();
-    }
-
-    function updatePriceUI(id, change) {
-        let el = document.getElementById(`change-${id}`);
-        if (!el) return;
-        el.innerText = (change >= 0 ? "+" : "") + change.toFixed(2) + "%";
-        el.className = `price-change ${change >= 0 ? 'up' : 'down'}`;
-    }
-
-    async function addCoin() {
-        let s = document.getElementById('search-input').value.toUpperCase().trim();
-        if (!s || watchlist.includes(s)) return;
-        let data = await fetchCryptoData(s);
-        if (data.price > 0) {
-            watchlist.push(s); 
-            prices[s] = data.price; changes[s] = data.change;
-            localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
-            renderWatchlist();
-            if (lastRawValue !== "0") calculateKurs(lastSource);
-            document.getElementById('search-input').value = "";
-        }
-    }
-
-    function removeCoin(s) {
-        watchlist = watchlist.filter(i => i !== s);
-        localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
-        renderWatchlist();
-        if (lastRawValue !== "0") calculateKurs(lastSource);
-    }
-
-    function renderWatchlist() {
-        let container = document.getElementById('watchlist');
-        container.innerHTML = "";
-        watchlist.forEach(s => {
-            const chg = changes[s] || 0;
-            container.innerHTML += `
-                <div class="coin-row">
-                    <div class="coin-card">
-                        <div class="logo-wrapper"><img src="${getLogo(s)}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1041/1041888.png'"></div>
-                        <div class="coin-info">
-                            <div class="label-row"><label>${s}</label></div>
-                            <div class="input-wrapper">
-                                <input type="text" id="${s}" inputmode="decimal" placeholder="0" oninput="calculateKurs('${s}')">
-                                <span class="price-change ${chg >= 0 ? 'up' : 'down'}">${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="delete-btn-outside" onclick="removeCoin('${s}')">×</div>
-                </div>`;
-        });
-    }
-
-    function getLogo(s) {
-        const sym = s.toLowerCase();
-        if (sym === 'deep') return 'https://assets.coingecko.com/coins/images/40049/large/deep.png';
-        if (sym === 'sui') return 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/sui/info/logo.png';
-        if (sym === 'sol') return 'https://assets.coingecko.com/coins/images/4128/large/solana.png';
-        return `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${sym}.png`;
-    }
-
-    window.onload = fetchAllPrices;
-</script>
-</body>
-</html>
+            const r =
