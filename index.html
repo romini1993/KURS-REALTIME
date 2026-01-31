@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-title" content="CalcKurs">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2454/2454269.png">
     <meta name="theme-color" content="#0f172a">
-    <title>CalcKurs Pro v6.3 - Anti Stuck</title>
+    <title>CalcKurs Pro v6.4</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -119,6 +119,7 @@
 <script>
     let usdToIdr = 16000; 
     let prices = { btc: 0, eth: 0 };
+    let changes = { btc: 0, eth: 0 }; 
     let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
     let lastSource = 'usd'; let lastRawValue = "0";
 
@@ -173,28 +174,36 @@
                     const t = d.result.list[0];
                     const p = parseFloat(t.lastPrice);
                     const c = ((p - parseFloat(t.prevPrice24h)) / parseFloat(t.prevPrice24h)) * 100;
-                    prices[s.toLowerCase()] = p;
-                    prices[s] = p; // double check case sensitive
-                    
-                    const pEl = document.getElementById(`price-${s.toLowerCase()}`);
-                    const cEl = document.getElementById(`change-${s.toLowerCase()}`);
-                    if(pEl) pEl.innerText = "$" + formatLivePrice(p);
-                    if(cEl) {
-                        cEl.innerText = (c >= 0 ? '+' : '') + c.toFixed(2) + '%';
-                        cEl.className = 'price-change ' + (c >= 0 ? 'up' : 'down');
-                    }
+                    prices[s] = p;
+                    changes[s] = c;
                 }
             } catch {}
         }
         renderWatchlist();
+        updateFixedUI();
         if (lastRawValue !== "0") calculateKurs(lastSource);
         document.getElementById('status').innerText = "Update: " + new Date().toLocaleTimeString();
+    }
+
+    function updateFixedUI() {
+        if (prices.BTC) {
+            document.getElementById('price-btc').innerText = "$" + formatLivePrice(prices.BTC);
+            document.getElementById('change-btc').innerText = (changes.BTC >= 0 ? '+' : '') + changes.BTC.toFixed(2) + '%';
+            document.getElementById('change-btc').className = 'price-change ' + (changes.BTC >= 0 ? 'up' : 'down');
+        }
+        if (prices.ETH) {
+            document.getElementById('price-eth').innerText = "$" + formatLivePrice(prices.ETH);
+            document.getElementById('change-eth').innerText = (changes.ETH >= 0 ? '+' : '') + changes.ETH.toFixed(2) + '%';
+            document.getElementById('change-eth').className = 'price-change ' + (changes.ETH >= 0 ? 'up' : 'down');
+        }
     }
 
     function renderWatchlist() {
         let container = document.getElementById('watchlist'); 
         container.innerHTML = "";
         watchlist.forEach(s => {
+            const p = prices[s] || 0;
+            const c = changes[s] || 0;
             container.innerHTML += `
                 <div class="coin-row">
                     <div class="coin-card">
@@ -203,8 +212,8 @@
                             <div class="label-row">
                                 <label>${s}</label>
                                 <div class="price-info-right">
-                                    <span id="price-${s.toLowerCase()}" class="live-price">$${formatLivePrice(prices[s] || 0)}</span>
-                                    <span id="change-${s.toLowerCase()}" class="price-change">--</span>
+                                    <span class="live-price">$${formatLivePrice(p)}</span>
+                                    <span class="price-change ${c >= 0 ? 'up' : 'down'}">${c >= 0 ? '+' : ''}${c.toFixed(2)}%</span>
                                 </div>
                             </div>
                             <div class="input-wrapper"><input type="text" id="${s}" inputmode="decimal" placeholder="0" oninput="calculateKurs('${s}')"></div>
