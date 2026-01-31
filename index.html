@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-title" content="CalcKurs">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2454/2454269.png">
     <meta name="theme-color" content="#0f172a">
-    <title>CalcKurs Pro v5 - Stable</title>
+    <title>CalcKurs Pro v5 - Style Sync</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -24,8 +24,23 @@
         body { background: var(--bg); color: var(--text); margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; }
         .container { width: 100%; max-width: 400px; padding: env(safe-area-inset-top) 20px 40px 20px; }
         
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 10px 0; }
-        h2 { margin: 0; font-size: 22px; color: var(--accent); }
+        /* HEADER STYLE SESUAI APR */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding: 10px 0; }
+        .header-left { display: flex; flex-direction: column; gap: 4px; }
+        h2 { margin: 0; font-size: 24px; color: var(--accent); }
+        
+        /* KURS INFO STYLE SESUAI APR */
+        .kurs-info { 
+            font-size: 11px; 
+            color: var(--subtext); 
+            background: rgba(255,255,255,0.05); 
+            padding: 5px 10px; 
+            border-radius: 8px; 
+            border: 1px solid #334155;
+            display: inline-block;
+            width: fit-content;
+        }
+
         .refresh-btn { background: var(--card); border: 1px solid var(--accent); color: var(--accent); padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: bold; }
         
         .coin-row { position: relative; width: 100%; margin-bottom: 12px; }
@@ -56,7 +71,10 @@
 
 <div class="container">
     <div class="header">
-        <h2>💱 Calc Kurs Pro</h2>
+        <div class="header-left">
+            <h2>💱 Calc Kurs Pro</h2>
+            <div id="kurs-live" class="kurs-info">USD/IDR: Loading...</div>
+        </div>
         <button class="refresh-btn" onclick="fetchAllPrices()">🔄 Update</button>
     </div>
 
@@ -71,10 +89,7 @@
         <div class="coin-card" style="border-left: 5px solid #3b82f6; margin-bottom:12px;">
             <div class="logo-wrapper"><img src="https://api.iconify.design/emojione:flag-for-united-states.svg"></div>
             <div class="coin-info">
-                <div class="label-row">
-                    <label>USD (Dollar)</label>
-                    <span id="rate-usd-info" style="font-size: 10px; color: var(--accent);">Loading...</span>
-                </div>
+                <div class="label-row"><label>USD (Dollar)</label></div>
                 <div class="input-wrapper"><input type="text" id="usd" inputmode="decimal" placeholder="0" oninput="calculateKurs('usd')"></div>
             </div>
         </div>
@@ -112,7 +127,7 @@
 </div>
 
 <script>
-    let usdToIdr = 16000; // Cadangan
+    let usdToIdr = 16000; 
     let prices = { btc: 0, eth: 0 };
     let changes = { btc: 0, eth: 0 }; 
     let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
@@ -158,19 +173,17 @@
         }
     }
 
-    // Ambil Kurs Dollar dari CoinGecko (Kayak aplikasi APR elu)
     async function fetchKursDollar() {
         try {
             const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=idr');
             const d = await r.json();
             usdToIdr = d['usd-coin'].idr;
-            document.getElementById('rate-usd-info').innerText = "Rp " + new Intl.NumberFormat('id-ID').format(usdToIdr);
+            document.getElementById('kurs-live').innerText = `USD/IDR: ${new Intl.NumberFormat('id-ID').format(usdToIdr)}`;
         } catch (e) {
-            document.getElementById('rate-usd-info').innerText = "Offline Mode";
+            document.getElementById('kurs-live').innerText = "Kurs: Offline";
         }
     }
 
-    // Ambil Harga Crypto dari Bybit (Karena Bybit lebih cepet buat crypto)
     async function fetchCryptoData(s) {
         try {
             const r = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${s.toUpperCase()}USDT`);
@@ -187,11 +200,8 @@
 
     async function fetchAllPrices() {
         document.getElementById('status').innerText = "Updating...";
-        
-        // 1. Ambil Kurs Dollar dulu
         await fetchKursDollar();
 
-        // 2. Ambil BTC & ETH
         const b1 = await fetchCryptoData('BTC');
         prices.btc = b1.price; changes.btc = b1.change;
         updatePriceUI('btc', b1.change);
@@ -200,7 +210,6 @@
         prices.eth = e1.price; changes.eth = e1.change;
         updatePriceUI('eth', e1.change);
 
-        // 3. Ambil Watchlist
         for (let s of watchlist) {
             const res = await fetchCryptoData(s);
             if (res.price > 0) {
