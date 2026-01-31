@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-title" content="CalcKurs">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2454/2454269.png">
     <meta name="theme-color" content="#0f172a">
-    <title>CalcKurs Pro v5 - Realtime</title>
+    <title>CalcKurs Pro v5 - Stable</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -56,7 +56,7 @@
 
 <div class="container">
     <div class="header">
-        <h2>💱 Calc Kurs Realtime</h2>
+        <h2>💱 Calc Kurs Pro</h2>
         <button class="refresh-btn" onclick="fetchAllPrices()">🔄 Update</button>
     </div>
 
@@ -72,8 +72,8 @@
             <div class="logo-wrapper"><img src="https://api.iconify.design/emojione:flag-for-united-states.svg"></div>
             <div class="coin-info">
                 <div class="label-row">
-                    <label>USD (Dollar Realtime)</label>
-                    <span id="rate-usd-info" style="font-size: 10px; color: var(--accent);">Loading Rate...</span>
+                    <label>USD (Dollar)</label>
+                    <span id="rate-usd-info" style="font-size: 10px; color: var(--accent);">Loading...</span>
                 </div>
                 <div class="input-wrapper"><input type="text" id="usd" inputmode="decimal" placeholder="0" oninput="calculateKurs('usd')"></div>
             </div>
@@ -104,7 +104,7 @@
     
     <div class="search-section">
         <div class="search-box">
-            <input type="text" id="search-input" placeholder="Tambah koin (Contoh: SOL, SUI)...">
+            <input type="text" id="search-input" placeholder="Tambah koin...">
             <button class="add-btn" onclick="addCoin()">Tambah</button>
         </div>
         <div id="status" class="status-info">Ready, Bro!</div>
@@ -112,7 +112,7 @@
 </div>
 
 <script>
-    let usdToIdr = 16790; // Fallback kalau API gagal
+    let usdToIdr = 16000; // Cadangan
     let prices = { btc: 0, eth: 0 };
     let changes = { btc: 0, eth: 0 }; 
     let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
@@ -138,10 +138,8 @@
         }
         
         let val = parseFloat(raw) || 0;
-        // Konversi semua ke Base USD dulu
         let baseUsd = (source === 'idr') ? val / usdToIdr : (source === 'usd' ? val : val * (prices[source] || 0));
 
-        // Update semua field
         if (source !== 'idr') document.getElementById('idr').value = formatOutput(baseUsd * usdToIdr, 0);
         if (source !== 'usd') document.getElementById('usd').value = formatOutput(baseUsd, 4);
         if (source !== 'btc') document.getElementById('btc').value = formatOutput(baseUsd / (prices.btc || 1), 8);
@@ -160,11 +158,22 @@
         }
     }
 
-    async function fetchPriceData(symbol, isFiat = false) {
+    // Ambil Kurs Dollar dari CoinGecko (Kayak aplikasi APR elu)
+    async function fetchKursDollar() {
         try {
-            // Jika isFiat, kita ambil pair USDTIDR, jika bukan kita ambil SYMBOL+USDT
-            const pair = isFiat ? "USDTIDR" : `${symbol.toUpperCase()}USDT`;
-            const r = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${pair}`);
+            const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=idr');
+            const d = await r.json();
+            usdToIdr = d['usd-coin'].idr;
+            document.getElementById('rate-usd-info').innerText = "Rp " + new Intl.NumberFormat('id-ID').format(usdToIdr);
+        } catch (e) {
+            document.getElementById('rate-usd-info').innerText = "Offline Mode";
+        }
+    }
+
+    // Ambil Harga Crypto dari Bybit (Karena Bybit lebih cepet buat crypto)
+    async function fetchCryptoData(s) {
+        try {
+            const r = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${s.toUpperCase()}USDT`);
             const d = await r.json();
             if (d.result?.list?.[0]) {
                 const t = d.result.list[0];
@@ -172,48 +181,36 @@
                 const prev = parseFloat(t.prevPrice24h);
                 return { price: last, change: ((last - prev) / prev) * 100 };
             }
-        } catch (e) { 
-            console.error("Fetch Error:", e);
-            return { price: 0, change: 0 }; 
-        }
+        } catch { return { price: 0, change: 0 }; }
         return { price: 0, change: 0 };
     }
 
     async function fetchAllPrices() {
-        document.getElementById('status').innerText = "Updating Prices...";
+        document.getElementById('status').innerText = "Updating...";
         
-        // 1. Ambil Kurs USD/IDR Realtime (dari USDT/IDR Bybit)
-        const usdData = await fetchPriceData('USDT', true);
-        if (usdData.price > 0) {
-            usdToIdr = usdData.price;
-            document.getElementById('rate-usd-info').innerText = "Rp " + new Intl.NumberFormat('id-ID').format(usdToIdr);
-        }
+        // 1. Ambil Kurs Dollar dulu
+        await fetchKursDollar();
 
         // 2. Ambil BTC & ETH
-        const b1 = await fetchPriceData('BTC');
+        const b1 = await fetchCryptoData('BTC');
         prices.btc = b1.price; changes.btc = b1.change;
         updatePriceUI('btc', b1.change);
 
-        const e1 = await fetchPriceData('ETH');
+        const e1 = await fetchCryptoData('ETH');
         prices.eth = e1.price; changes.eth = e1.change;
         updatePriceUI('eth', e1.change);
 
         // 3. Ambil Watchlist
         for (let s of watchlist) {
-            const res = await fetchPriceData(s);
+            const res = await fetchCryptoData(s);
             if (res.price > 0) {
                 prices[s] = res.price; changes[s] = res.change;
             }
         }
 
         renderWatchlist();
-        
-        // Re-calculate biar angka nggak ilang pas update
-        if (lastRawValue !== "0" && lastRawValue !== "") {
-            calculateKurs(lastSource);
-        }
-
-        document.getElementById('status').innerText = "Last Update: " + new Date().toLocaleTimeString();
+        if (lastRawValue !== "0" && lastRawValue !== "") calculateKurs(lastSource);
+        document.getElementById('status').innerText = "Update: " + new Date().toLocaleTimeString();
     }
 
     function updatePriceUI(id, change) {
@@ -226,7 +223,7 @@
     async function addCoin() {
         let s = document.getElementById('search-input').value.toUpperCase().trim();
         if (!s || watchlist.includes(s)) return;
-        let data = await fetchPriceData(s);
+        let data = await fetchCryptoData(s);
         if (data.price > 0) {
             watchlist.push(s); 
             prices[s] = data.price; changes[s] = data.change;
@@ -234,8 +231,6 @@
             renderWatchlist();
             if (lastRawValue !== "0") calculateKurs(lastSource);
             document.getElementById('search-input').value = "";
-        } else {
-            alert("Koin gak ketemu, bro. Cek lagi kodenya.");
         }
     }
 
