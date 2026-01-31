@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-title" content="CalcKurs">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2454/2454269.png">
     <meta name="theme-color" content="#0f172a">
-    <title>CalcKurs Pro v6.1</title>
+    <title>CalcKurs Pro v6.2 - Fixed</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -37,13 +37,12 @@
         .coin-card { background: var(--card); border-radius: 16px; padding: 14px 18px; display: flex; align-items: center; gap: 12px; border: 1px solid #334155; }
         .coin-info { flex: 1; overflow: hidden; }
         
-        /* STYLE HARGA LIVE */
-        .live-price { font-size: 12px; font-weight: bold; color: var(--accent); margin-right: 4px; }
+        .live-price { font-size: 12px; font-weight: bold; color: var(--accent); margin-right: 6px; }
 
         .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
         .label-row label { font-size: 11px; color: var(--subtext); font-weight: bold; text-transform: uppercase; }
-        .price-info-right { display: flex; align-items: center; gap: 6px; }
-        .price-change { font-size: 11px; font-weight: 800; min-width: 50px; text-align: right; }
+        .price-info-right { display: flex; align-items: center; }
+        .price-change { font-size: 11px; font-weight: 800; min-width: 55px; text-align: right; }
         .up { color: var(--up); }
         .down { color: var(--down); }
         
@@ -58,7 +57,7 @@
         .search-section { margin-top: 30px; border-top: 1px dashed #334155; padding-top: 20px; }
         .search-box { display: flex; gap: 8px; margin-bottom: 15px; }
         .search-box input { background: var(--card); border: 1px solid #334155; border-radius: 10px; padding: 12px; color: white; width: 100%; font-size: 14px; }
-        .add-btn { background: var(--accent); border: none; color: #0f172a; border-radius: 10px; padding: 0 15px; font-weight: bold; }
+        .add-btn { background: var(--accent); border: none; color: #0f172a; border-radius: 10px; padding: 0 15px; font-weight: bold; cursor: pointer; }
         .status-info { font-size: 11px; color: var(--subtext); text-align: center; margin-top: 10px; }
     </style>
 </head>
@@ -90,73 +89,15 @@
         </div>
         <div class="coin-card" style="border-left: 5px solid #f7931a; margin-bottom:12px;">
             <div class="logo-wrapper"><img src="https://assets.coingecko.com/coins/images/1/large/bitcoin.png"></div>
-            <div class="coin-info" id="box-btc"></div>
+            <div class="coin-info">
+                <div class="label-row">
+                    <label>BTC (Bitcoin)</label>
+                    <div class="price-info-right">
+                        <span id="price-btc" class="live-price">$0</span>
+                        <span id="change-btc" class="price-change">--</span>
+                    </div>
+                </div>
+                <div class="input-wrapper"><input type="text" id="btc" inputmode="decimal" placeholder="0" oninput="calculateKurs('btc')"></div>
+            </div>
         </div>
-        <div class="coin-card" style="border-left: 5px solid #627eea; margin-bottom:12px;">
-            <div class="logo-wrapper"><img src="https://assets.coingecko.com/coins/images/279/large/ethereum.png"></div>
-            <div class="coin-info" id="box-eth"></div>
-        </div>
-    </div>
-    <div id="watchlist"></div>
-    <div class="search-section">
-        <div class="search-box">
-            <input type="text" id="search-input" placeholder="Tambah koin...">
-            <button class="add-btn" onclick="addCoin()">Tambah</button>
-        </div>
-        <div id="status" class="status-info">Ready, Bro!</div>
-    </div>
-</div>
-
-<script>
-    let usdToIdr = 16000; 
-    let prices = { btc: 0, eth: 0 };
-    let changes = { btc: 0, eth: 0 }; 
-    let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
-    let lastSource = 'usd'; let lastRawValue = "0";
-
-    function formatOutput(num, dec) {
-        if (num === 0) return "";
-        return new Intl.NumberFormat('en-US', { maximumFractionDigits: dec }).format(num);
-    }
-
-    function formatLivePrice(price) {
-        if (price >= 100) return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        if (price >= 1) return price.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
-        return price.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 });
-    }
-
-    function calculateKurs(source) {
-        let el = document.getElementById(source); if (!el) return;
-        let raw = el.value.replace(/,/g, '');
-        lastSource = source; lastRawValue = raw;
-        if (!raw || raw === "" || raw === "0") {
-            document.querySelectorAll('input[type="text"]').forEach(i => { if(i.id !== source && i.id !== 'search-input') i.value = ""; });
-            return;
-        }
-        let val = parseFloat(raw) || 0;
-        let baseUsd = (source === 'idr') ? val / usdToIdr : (source === 'usd' ? val : val * (prices[source] || 0));
-        if (source !== 'idr') document.getElementById('idr').value = formatOutput(baseUsd * usdToIdr, 0);
-        if (source !== 'usd') document.getElementById('usd').value = formatOutput(baseUsd, 4);
-        if (source !== 'btc') document.getElementById('btc').value = formatOutput(baseUsd / (prices.btc || 1), 8);
-        if (source !== 'eth') document.getElementById('eth').value = formatOutput(baseUsd / (prices.eth || 1), 8);
-        watchlist.forEach(s => {
-            let t = document.getElementById(s);
-            if (t && s !== source) t.value = formatOutput(baseUsd / (prices[s] || 1), 6);
-        });
-    }
-
-    async function fetchKursDollar() {
-        try {
-            const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=idr');
-            const d = await r.json(); usdToIdr = d['usd-coin'].idr;
-            document.getElementById('kurs-live').innerText = `USD/IDR: ${new Intl.NumberFormat('id-ID').format(usdToIdr)}`;
-        } catch { document.getElementById('kurs-live').innerText = "Kurs: Offline"; }
-    }
-
-    async function fetchCryptoData(s) {
-        try {
-            const r = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${s.toUpperCase()}USDT`);
-            const d = await r.json();
-            if (d.result?.list?.[0]) {
-                const t = d.result.list[0];
-                return { price: parseFloat(t.lastPrice), change: ((parseFloat(t.lastPrice) - parseFloat(t.prevPrice24h)) / parseFloat(t.prevPrice24h))
+        <div class="coin-card" style="border-left: 5px solid #627eea; margin-bottom:12
