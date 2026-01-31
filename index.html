@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-title" content="CalcKurs">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2454/2454269.png">
     <meta name="theme-color" content="#0f172a">
-    <title>CalcKurs Pro v6.5</title>
+    <title>CalcKurs Pro v6.6</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -117,14 +117,12 @@
 </div>
 
 <script>
-    // Ambil harga terakhir dari memori atau pake default 16000 kalo baru banget install
     let usdToIdr = parseFloat(localStorage.getItem('last_usd_idr')) || 16000; 
-    let prices = { btc: 0, eth: 0 };
-    let changes = { btc: 0, eth: 0 }; 
+    let prices = { BTC: 0, ETH: 0 }; // Pake huruf gede biar sinkron
+    let changes = { BTC: 0, ETH: 0 }; 
     let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
     let lastSource = 'usd'; let lastRawValue = "0";
 
-    // Tampilin harga memori pas awal buka biar ga loading terus
     document.getElementById('kurs-live').innerText = `USD/IDR: ${new Intl.NumberFormat('id-ID').format(usdToIdr)}`;
 
     function formatOutput(num, dec) {
@@ -147,36 +145,32 @@
             return;
         }
         let val = parseFloat(raw) || 0;
-        let baseUsd = (source === 'idr') ? val / usdToIdr : (source === 'usd' ? val : val * (prices[source] || 0));
         
+        // Logic hitung base USD (Fix: Cari source huruf gede dulu)
+        let coinKey = source.toUpperCase();
+        let baseUsd = (source === 'idr') ? val / usdToIdr : (source === 'usd' ? val : val * (prices[coinKey] || 0));
+        
+        // Update semua input
         if (source !== 'idr') document.getElementById('idr').value = formatOutput(baseUsd * usdToIdr, 0);
         if (source !== 'usd') document.getElementById('usd').value = formatOutput(baseUsd, 4);
-        if (source !== 'btc') document.getElementById('btc').value = formatOutput(baseUsd / (prices.btc || 1), 8);
-        if (source !== 'eth') document.getElementById('eth').value = formatOutput(baseUsd / (prices.eth || 1), 8);
+        if (source !== 'btc') document.getElementById('btc').value = formatOutput(baseUsd / (prices.BTC || 1), 8);
+        if (source !== 'eth') document.getElementById('eth').value = formatOutput(baseUsd / (prices.ETH || 1), 8);
         
         watchlist.forEach(s => {
             let t = document.getElementById(s);
-            if (t && s !== source) t.value = formatOutput(baseUsd / (prices[s] || 1), 6);
+            if (t && s !== source) t.value = formatOutput(baseUsd / (prices[s.toUpperCase()] || 1), 6);
         });
     }
 
     async function fetchAllPrices() {
         document.getElementById('status').innerText = "Updating...";
         try {
-            // Pake timeout biar kalo internet lemot ga stuck lama
-            const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), 5000);
-            
-            const rKurs = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=idr', { signal: controller.signal });
+            const rKurs = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=idr');
             const dKurs = await rKurs.json(); 
-            clearTimeout(id);
-            
             usdToIdr = dKurs['usd-coin'].idr;
-            localStorage.setItem('last_usd_idr', usdToIdr); // Simpen ke memori
+            localStorage.setItem('last_usd_idr', usdToIdr);
             document.getElementById('kurs-live').innerText = `USD/IDR: ${new Intl.NumberFormat('id-ID').format(usdToIdr)}`;
-        } catch(e) {
-            console.log("Pake harga memori dulu bro.");
-        }
+        } catch(e) {}
 
         const coins = ['BTC', 'ETH', ...watchlist];
         for (let s of coins) {
@@ -187,8 +181,8 @@
                     const t = d.result.list[0];
                     const p = parseFloat(t.lastPrice);
                     const c = ((p - parseFloat(t.prevPrice24h)) / parseFloat(t.prevPrice24h)) * 100;
-                    prices[s] = p;
-                    changes[s] = c;
+                    prices[s.toUpperCase()] = p;
+                    changes[s.toUpperCase()] = c;
                 }
             } catch {}
         }
@@ -215,8 +209,8 @@
         let container = document.getElementById('watchlist'); 
         container.innerHTML = "";
         watchlist.forEach(s => {
-            const p = prices[s] || 0;
-            const c = changes[s] || 0;
+            const p = prices[s.toUpperCase()] || 0;
+            const c = changes[s.toUpperCase()] || 0;
             container.innerHTML += `
                 <div class="coin-row">
                     <div class="coin-card">
