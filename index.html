@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-title" content="CalcKurs">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2454/2454269.png">
     <meta name="theme-color" content="#0f172a">
-    <title>CalcKurs Pro v6.4</title>
+    <title>CalcKurs Pro v6.5</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -117,11 +117,15 @@
 </div>
 
 <script>
-    let usdToIdr = 16000; 
+    // Ambil harga terakhir dari memori atau pake default 16000 kalo baru banget install
+    let usdToIdr = parseFloat(localStorage.getItem('last_usd_idr')) || 16000; 
     let prices = { btc: 0, eth: 0 };
     let changes = { btc: 0, eth: 0 }; 
     let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
     let lastSource = 'usd'; let lastRawValue = "0";
+
+    // Tampilin harga memori pas awal buka biar ga loading terus
+    document.getElementById('kurs-live').innerText = `USD/IDR: ${new Intl.NumberFormat('id-ID').format(usdToIdr)}`;
 
     function formatOutput(num, dec) {
         if (num === 0) return "";
@@ -159,11 +163,20 @@
     async function fetchAllPrices() {
         document.getElementById('status').innerText = "Updating...";
         try {
-            const rKurs = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=idr');
+            // Pake timeout biar kalo internet lemot ga stuck lama
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), 5000);
+            
+            const rKurs = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=idr', { signal: controller.signal });
             const dKurs = await rKurs.json(); 
+            clearTimeout(id);
+            
             usdToIdr = dKurs['usd-coin'].idr;
+            localStorage.setItem('last_usd_idr', usdToIdr); // Simpen ke memori
             document.getElementById('kurs-live').innerText = `USD/IDR: ${new Intl.NumberFormat('id-ID').format(usdToIdr)}`;
-        } catch {}
+        } catch(e) {
+            console.log("Pake harga memori dulu bro.");
+        }
 
         const coins = ['BTC', 'ETH', ...watchlist];
         for (let s of coins) {
