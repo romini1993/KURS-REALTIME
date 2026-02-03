@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -73,7 +72,7 @@
         </div>
         <div class="nav-bar">
             <div id="kurs-live" class="kurs-info">USD/IDR: Loading...</div>
-            <button class="refresh-btn" onclick="fetchAllPrices()">🔄 Update</button>
+            <button class="refresh-btn" onclick="updateSemua()">🔄 Update</button>
         </div>
     </div>
 
@@ -136,16 +135,24 @@
         fetchAllPrices();
     };
 
+    async function updateSemua() {
+        await fetchKurs();
+        await fetchAllPrices();
+    }
+
     async function fetchKurs() {
         try {
-            const r = await fetch('https://open.er-api.com/v6/latest/USD');
+            // Pake API yang sama kayak APR (CoinGecko) biar sinkron & update
+            const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=idr');
             const d = await r.json();
-            if(d.rates?.IDR) {
-                usdToIdr = d.rates.IDR;
+            if(d['usd-coin']?.idr) {
+                usdToIdr = d['usd-coin'].idr;
                 localStorage.setItem('last_usd_idr', usdToIdr);
-                document.getElementById('kurs-live').innerText = `USD/IDR: ${Math.round(usdToIdr).toLocaleString('id-ID')}`;
+                document.getElementById('kurs-live').innerText = `USD/IDR: ${new Intl.NumberFormat('id-ID').format(usdToIdr)}`;
             }
-        } catch(e) {}
+        } catch(e) {
+            console.log("Kurs offline mode");
+        }
     }
 
     async function fetchCoinMap() {
@@ -246,14 +253,6 @@
                         prices[s] = parseFloat(ds.lastPrice);
                         changes[s] = parseFloat(ds.priceChangePercent);
                         found = true;
-                    }
-                }
-                if(!found && coinMapCG[s]) {
-                    const rcg = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinMapCG[s]}&vs_currencies=usd&include_24hr_change=true`);
-                    const dcg = await rcg.json();
-                    if(dcg[coinMapCG[s]]) {
-                        prices[s] = dcg[coinMapCG[s]].usd;
-                        changes[s] = dcg[coinMapCG[s]].usd_24h_change || 0;
                     }
                 }
             } catch(e) {}
