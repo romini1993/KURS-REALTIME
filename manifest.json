@@ -1,6 +1,6 @@
 {
-  "name": "CalcKurs Pro",
-  "short_name": "CalcKurs",
+  "name": "APR Pro",
+  "short_name": "APR",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#0f172a",
@@ -9,7 +9,8 @@
     {
       "src": "https://cdn-icons-png.flaticon.com/512/2454/2454269.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
