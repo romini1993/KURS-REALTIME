@@ -3,11 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💱</text></svg>">
+    
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f172a%22/><text x=%225%22 y=%22.85em%22 font-size=%2280%22>💱</text></svg>">
+
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="KURS">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2454/2454269.png">
     <meta name="theme-color" content="#0f172a">
     <title>KURS PRO PRECISION</title>
     <style>
@@ -117,6 +121,7 @@
 </div>
 
 <script>
+    // Paste semua script lu di sini (Sama kaya versi sebelumnya)
     let usdToIdr = parseFloat(localStorage.getItem('last_usd_idr')) || 16000; 
     let prices = { BTC: 0, ETH: 0 };
     let changes = { BTC: 0, ETH: 0 }; 
@@ -172,12 +177,10 @@
         return parts.join(".");
     }
 
-    // Fungsi canggih untuk nampilin harga micin (sampai 6 desimal)
     function formatPriceDisplay(p) {
         if (p >= 1) {
             return "$" + p.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
         } else {
-            // Untuk koin di bawah $1, tampilkan hingga 6 desimal tanpa 0 yang tidak perlu di belakang
             return "$" + p.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 6});
         }
     }
@@ -215,7 +218,6 @@
                 if (f === 'idr') {
                     targetEl.value = formatWithCommas(Math.round(res).toString());
                 } else {
-                    // Logika presisi: koin di bawah 1 dollar kasih desimal banyak
                     let currentCoinPrice = prices[f.toUpperCase()] || 1;
                     let dec = (f === 'usd') ? 2 : (currentCoinPrice < 1 ? 6 : 4);
                     let formatted = res.toFixed(dec).replace(/\.?0+$/, "");
@@ -228,7 +230,6 @@
     async function fetchAllPrices() {
         document.getElementById('status').innerText = "Updating...";
         const symbols = ['BTC', 'ETH', ...watchlist];
-        
         for (let s of symbols) {
             try {
                 let found = false;
@@ -259,7 +260,6 @@
                 }
             } catch(e) {}
         }
-
         renderWatchlist();
         updateFixedUI();
         if (lastRawValue) calculateKurs(lastSource, lastRawValue);
