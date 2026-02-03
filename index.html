@@ -37,7 +37,7 @@
 
         .coin-row { position: relative; width: 100%; margin-bottom: 10px; }
         .coin-card { background: var(--card); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; border: 1px solid #334155; }
-        .logo-wrapper { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 1px solid #475569; }
+        .logo-wrapper { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 1px solid #475569; background: #000; }
         .logo-wrapper img { width: 100%; height: 100%; object-fit: cover; }
         .info-group { display: flex; flex-direction: column; min-width: 70px; flex-shrink: 0; }
         .info-group label { font-size: 11px; color: var(--subtext); font-weight: bold; }
@@ -76,6 +76,7 @@
             <div style="width:50px"></div>
         </div>
         <div style="height:10px"></div>
+        
         <div class="coin-card" style="border-left: 4px solid #3b82f6;">
             <div class="logo-wrapper"><img src="https://api.iconify.design/emojione:flag-for-united-states.svg"></div>
             <div class="info-group"><label>USD</label><span class="live-price">Dollar</span></div>
@@ -83,15 +84,21 @@
             <div style="width:50px"></div>
         </div>
         <div style="height:10px"></div>
+
         <div class="coin-card" style="border-left: 4px solid #f7931a;">
-            <div class="logo-wrapper"><img src="https://assets.coingecko.com/coins/images/1/large/bitcoin.png"></div>
+            <div class="logo-wrapper">
+                <img src="https://coinicons-api.vercel.app/api/icon/btc" onerror="handleLogoError(this, 'btc')">
+            </div>
             <div class="info-group"><label>BTC</label><span id="price-btc" class="live-price">$0</span></div>
             <div class="input-box"><input type="text" id="btc" inputmode="decimal" placeholder="0" oninput="handleInput('btc')"></div>
             <span id="change-btc" class="price-change">--</span>
         </div>
         <div style="height:10px"></div>
+
         <div class="coin-card" style="border-left: 4px solid #627eea;">
-            <div class="logo-wrapper"><img src="https://assets.coingecko.com/coins/images/279/large/ethereum.png"></div>
+            <div class="logo-wrapper">
+                <img src="https://coinicons-api.vercel.app/api/icon/eth" onerror="handleLogoError(this, 'eth')">
+            </div>
             <div class="info-group"><label>ETH</label><span id="price-eth" class="live-price">$0</span></div>
             <div class="input-box"><input type="text" id="eth" inputmode="decimal" placeholder="0" oninput="handleInput('eth')"></div>
             <span id="change-eth" class="price-change">--</span>
@@ -114,8 +121,23 @@
     let prices = { BTC: 0, ETH: 0 };
     let changes = { BTC: 0, ETH: 0 }; 
     let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
-    let lastSource = 'idr'; // Default source
+    let lastSource = 'idr';
     let lastRawValue = "";
+
+    // FUNGSI SAKTI LOGO DARI PORTOFOLIO ELU
+    function handleLogoError(img, sym) {
+        const retry = parseInt(img.getAttribute('data-retry') || "0");
+        const sources = [
+            `https://coinicons-api.vercel.app/api/icon/${sym.toLowerCase()}`,
+            `https://assets.coincap.io/assets/icons/${sym.toLowerCase()}@2x.png`,
+            `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${sym.toLowerCase()}.png`,
+            `https://cdn-icons-png.flaticon.com/512/1041/1041888.png`
+        ];
+        if (retry < sources.length - 1) {
+            img.setAttribute('data-retry', retry + 1);
+            img.src = sources[retry + 1];
+        }
+    }
 
     function formatWithCommas(val) {
         if (!val || val === "0") return "";
@@ -127,18 +149,14 @@
     function handleInput(id) {
         let el = document.getElementById(id);
         let raw = el.value.replace(/,/g, '');
-        
         if (raw === "") {
             document.querySelectorAll('input[type="text"]').forEach(i => { if(i.id !== 'search-input') i.value = ""; });
             lastRawValue = "";
             return;
         }
-
         lastSource = id;
         lastRawValue = raw;
         calculateKurs(id, raw);
-        
-        // Fix cursor position
         let cursor = el.selectionStart;
         let oldLen = el.value.length;
         el.value = formatWithCommas(raw);
@@ -149,18 +167,15 @@
     function calculateKurs(source, rawVal) {
         let val = parseFloat(rawVal) || 0;
         let baseUsd = 0;
-
         if (source === 'idr') baseUsd = val / usdToIdr;
         else if (source === 'usd') baseUsd = val;
         else baseUsd = val * (prices[source.toUpperCase()] || 0);
         
         const allFields = ['idr', 'usd', 'btc', 'eth', ...watchlist.map(s => s.toLowerCase())];
-        
         allFields.forEach(f => {
             if (f !== source) {
                 let targetEl = document.getElementById(f);
                 if (!targetEl) return;
-                
                 let res = 0;
                 if (f === 'idr') res = baseUsd * usdToIdr;
                 else if (f === 'usd') res = baseUsd;
@@ -179,9 +194,7 @@
 
     async function fetchAllPrices() {
         document.getElementById('status').innerText = "Updating...";
-        
         try {
-            // 1. Fetch Kurs USD/IDR
             const rKurs = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=idr');
             const dKurs = await rKurs.json(); 
             if(dKurs['usd-coin']?.idr) {
@@ -189,9 +202,8 @@
                 localStorage.setItem('last_usd_idr', usdToIdr);
                 document.getElementById('kurs-live').innerText = `USD/IDR: ${new Intl.NumberFormat('id-ID').format(usdToIdr)}`;
             }
-        } catch(e) { console.log("IDR fetch failed"); }
+        } catch(e) {}
 
-        // 2. Fetch Crypto Prices from Bybit
         const symbols = ['BTC', 'ETH', ...watchlist];
         for (let s of symbols) {
             try {
@@ -202,9 +214,8 @@
                     prices[s.toUpperCase()] = parseFloat(t.lastPrice);
                     changes[s.toUpperCase()] = ((parseFloat(t.lastPrice) - parseFloat(t.prevPrice24h)) / parseFloat(t.prevPrice24h)) * 100;
                 }
-            } catch(e) { console.log(`${s} fetch failed`); }
+            } catch(e) {}
         }
-
         renderWatchlist();
         updateFixedUI();
         if (lastRawValue) calculateKurs(lastSource, lastRawValue);
@@ -234,7 +245,9 @@
             container.innerHTML += `
                 <div class="coin-row">
                     <div class="coin-card">
-                        <div class="logo-wrapper"><img src="${getLogo(s)}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1041/1041888.png'"></div>
+                        <div class="logo-wrapper">
+                            <img src="https://coinicons-api.vercel.app/api/icon/${id}" onerror="handleLogoError(this, '${id}')">
+                        </div>
                         <div class="info-group"><label>${s}</label><span class="live-price">$${p.toLocaleString()}</span></div>
                         <div class="input-box"><input type="text" id="${id}" inputmode="decimal" placeholder="0" oninput="handleInput('${id}')"></div>
                         <span class="price-change ${c >= 0 ? 'up' : 'down'}">${c >= 0 ? '+' : ''}${c.toFixed(2)}%</span>
@@ -258,13 +271,6 @@
         watchlist = watchlist.filter(i => i !== s);
         localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
         renderWatchlist();
-    }
-
-    function getLogo(s) {
-        const sym = s.toLowerCase();
-        if (sym === 'deep') return 'https://assets.coingecko.com/coins/images/40049/large/deep.png';
-        if (sym === 'sui') return 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/sui/info/logo.png';
-        return `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${sym}.png`;
     }
 
     window.onload = fetchAllPrices;
