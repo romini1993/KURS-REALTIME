@@ -33,25 +33,13 @@
         .kurs-info { font-size: 12px; color: var(--subtext); background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 8px; border: 1px solid #334155; font-weight: 600; }
         .refresh-btn { background: var(--card); border: 1px solid var(--accent); color: var(--accent); padding: 8px 14px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: bold; }
 
-        /* FIX LOGO BIAR GAK BERANTAKAN */
         .coin-row { position: relative; width: 100%; margin-bottom: 10px; }
-        .coin-card { background: var(--card); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 12px; border: 1px solid #334155; height: 60px; }
-        .logo-wrapper { 
-            width: 32px; 
-            height: 32px; 
-            min-width: 32px; 
-            border-radius: 50%; 
-            overflow: hidden; 
-            background: #000; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #475569;
-        }
-        .logo-wrapper img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .coin-card { background: var(--card); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 12px; border: 1px solid #334155; height: 62px; }
+        .logo-wrapper { width: 32px; height: 32px; min-width: 32px; border-radius: 50%; overflow: hidden; background: #000; border: 1px solid #475569; }
+        .logo-wrapper img { width: 100%; height: 100%; object-fit: cover; }
         
-        .info-group { display: flex; flex-direction: column; min-width: 65px; overflow: hidden; }
-        .info-group label { font-size: 11px; color: var(--subtext); font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .info-group { display: flex; flex-direction: column; min-width: 70px; overflow: hidden; }
+        .info-group label { font-size: 11px; color: var(--subtext); font-weight: bold; text-transform: uppercase; }
         .live-price { font-size: 10px; font-weight: bold; color: var(--accent); }
         
         .input-box { flex: 1; min-width: 0; }
@@ -61,11 +49,11 @@
         .up { color: var(--up); }
         .down { color: var(--down); }
         
-        .delete-btn-outside { position: absolute; right: -28px; top: 50%; transform: translateY(-50%); color: #ef4444; font-size: 24px; cursor: pointer; padding: 5px; }
+        .delete-btn-outside { position: absolute; right: -28px; top: 50%; transform: translateY(-50%); color: #ef4444; font-size: 24px; cursor: pointer; }
         
         .search-section { margin-top: 30px; border-top: 1px dashed #334155; padding-top: 20px; }
         .search-box { display: flex; gap: 8px; margin-bottom: 15px; }
-        .search-box input { background: var(--card); border: 1px solid #334155; border-radius: 10px; padding: 12px; font-size: 14px; }
+        .search-box input { background: var(--card); border: 1px solid #334155; border-radius: 10px; padding: 12px; font-size: 14px; color: white !important; }
         .add-btn { background: var(--accent); border: none; color: #0f172a; border-radius: 10px; padding: 0 15px; font-weight: bold; cursor: pointer; }
         .status-info { font-size: 11px; color: var(--subtext); text-align: center; }
     </style>
@@ -102,17 +90,17 @@
 
         <div class="coin-card" style="border-left: 4px solid #f7931a;">
             <div class="logo-wrapper"><img src="https://coinicons-api.vercel.app/api/icon/btc" data-sym="btc" onerror="handleLogoError(this)"></div>
-            <div class="info-group"><label>BTC</label><span id="price-btc" class="live-price">$0</span></div>
-            <div class="input-box"><input type="text" id="btc" inputmode="decimal" placeholder="0" oninput="handleInput('btc')"></div>
-            <span id="change-btc" class="price-change">--</span>
+            <div class="info-group"><label>BTC</label><span id="price-bitcoin" class="live-price">$0</span></div>
+            <div class="input-box"><input type="text" id="bitcoin" inputmode="decimal" placeholder="0" oninput="handleInput('bitcoin')"></div>
+            <span id="change-bitcoin" class="price-change">--</span>
         </div>
         <div style="height:10px"></div>
 
         <div class="coin-card" style="border-left: 4px solid #627eea;">
             <div class="logo-wrapper"><img src="https://coinicons-api.vercel.app/api/icon/eth" data-sym="eth" onerror="handleLogoError(this)"></div>
-            <div class="info-group"><label>ETH</label><span id="price-eth" class="live-price">$0</span></div>
-            <div class="input-box"><input type="text" id="eth" inputmode="decimal" placeholder="0" oninput="handleInput('eth')"></div>
-            <span id="change-eth" class="price-change">--</span>
+            <div class="info-group"><label>ETH</label><span id="price-ethereum" class="live-price">$0</span></div>
+            <div class="input-box"><input type="text" id="ethereum" inputmode="decimal" placeholder="0" oninput="handleInput('ethereum')"></div>
+            <span id="change-ethereum" class="price-change">--</span>
         </div>
     </div>
     
@@ -120,7 +108,7 @@
     
     <div class="search-section">
         <div class="search-box">
-            <input type="text" id="search-input" placeholder="ID koin (solana, sui, xrp...)">
+            <input type="text" id="search-input" placeholder="Simbol: sol, sui, xrp, doge...">
             <button class="add-btn" onclick="addCoin()">Tambah</button>
         </div>
         <div id="status" class="status-info">Ready, Bro!</div>
@@ -129,20 +117,26 @@
 
 <script>
     let usdToIdr = parseFloat(localStorage.getItem('last_usd_idr')) || 16000; 
-    let prices = { BTC: 0, ETH: 0 };
-    let changes = { BTC: 0, ETH: 0 }; 
-    let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
+    let prices = {}; 
+    let changes = {}; 
+    // Data watchlist sekarang simpen Objek {id, symbol} biar gak pusing
+    let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v5')) || [];
     let lastSource = 'idr';
     let lastRawValue = "";
 
-    // LOGIKA LOGO SAKTI (DIFIX BIAR GAK BERANTAKAN)
+    // Mapping Simbol ke ID CoinGecko (Akal-akalan biar user input gampang)
+    const autoMap = {
+        'sol': 'solana', 'sui': 'sui', 'xrp': 'ripple', 'doge': 'dogecoin', 'ada': 'cardano',
+        'dot': 'polkadot', 'trx': 'tron', 'link': 'chainlink', 'matic': 'polygon', 'shib': 'shiba-inu'
+    };
+
     function handleLogoError(img) {
         const sym = img.getAttribute('data-sym') || "btc";
         const retry = parseInt(img.getAttribute('data-retry') || "0");
         const sources = [
-            `https://coinicons-api.vercel.app/api/icon/${sym}`,
-            `https://assets.coincap.io/assets/icons/${sym}@2x.png`,
-            `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${sym}.png`,
+            `https://coinicons-api.vercel.app/api/icon/${sym.toLowerCase()}`,
+            `https://assets.coincap.io/assets/icons/${sym.toLowerCase()}@2x.png`,
+            `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${sym.toLowerCase()}.png`,
             `https://cdn-icons-png.flaticon.com/512/1041/1041888.png`
         ];
         if (retry < sources.length - 1) {
@@ -177,16 +171,18 @@
     function calculateKurs(source, rawVal) {
         let val = parseFloat(rawVal) || 0;
         let baseUsd = 0;
+
         if (source === 'idr') baseUsd = val / usdToIdr;
         else if (source === 'usd') baseUsd = val;
-        else baseUsd = val * (prices[source.toUpperCase()] || 0);
+        else baseUsd = val * (prices[source] || 0);
         
-        const allFields = ['idr', 'usd', 'btc', 'eth', ...watchlist.map(s => s.toLowerCase())];
+        const allFields = ['idr', 'usd', 'bitcoin', 'ethereum', ...watchlist.map(c => c.id)];
+        
         allFields.forEach(f => {
             if (f !== source) {
                 let targetEl = document.getElementById(f);
                 if (!targetEl) return;
-                let res = (f === 'idr') ? baseUsd * usdToIdr : (f === 'usd') ? baseUsd : baseUsd / (prices[f.toUpperCase()] || 1);
+                let res = (f === 'idr') ? baseUsd * usdToIdr : (f === 'usd') ? baseUsd : baseUsd / (prices[f] || 1);
                 if (f === 'idr') targetEl.value = formatWithCommas(Math.round(res).toString());
                 else {
                     let dec = (f === 'usd') ? 2 : 6;
@@ -197,9 +193,9 @@
     }
 
     async function fetchAllPrices() {
-        document.getElementById('status').innerText = "Syncing...";
+        document.getElementById('status').innerText = "Syncing Prices...";
         try {
-            const ids = ['usd-coin', 'bitcoin', 'ethereum', ...watchlist];
+            const ids = ['usd-coin', 'bitcoin', 'ethereum', ...watchlist.map(c => c.id)];
             const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd,idr&include_24hr_change=true`);
             const data = await response.json();
 
@@ -209,16 +205,10 @@
                 document.getElementById('kurs-live').innerText = `USD/IDR: ${new Intl.NumberFormat('id-ID').format(usdToIdr)}`;
             }
 
-            prices['BTC'] = data['bitcoin']?.usd || 0;
-            changes['BTC'] = data['bitcoin']?.usd_24h_change || 0;
-            prices['ETH'] = data['ethereum']?.usd || 0;
-            changes['ETH'] = data['ethereum']?.usd_24h_change || 0;
-
-            watchlist.forEach(s => {
-                if(data[s]) {
-                    prices[s.toUpperCase()] = data[s].usd;
-                    changes[s.toUpperCase()] = data[s].usd_24h_change || 0;
-                }
+            // Simpen harga pake ID CoinGecko biar gak bentrok
+            Object.keys(data).forEach(id => {
+                prices[id] = data[id].usd;
+                changes[id] = data[id].usd_24h_change || 0;
             });
 
             renderWatchlist();
@@ -226,18 +216,18 @@
             if (lastRawValue) calculateKurs(lastSource, lastRawValue);
             document.getElementById('status').innerText = "Update: " + new Date().toLocaleTimeString();
         } catch(e) {
-            document.getElementById('status').innerText = "API Limit (Wait)";
+            document.getElementById('status').innerText = "API Limit / Network Error";
         }
     }
 
     function updateFixedUI() {
-        ['BTC', 'ETH'].forEach(s => {
-            let pEl = document.getElementById(`price-${s.toLowerCase()}`);
-            let cEl = document.getElementById(`change-${s.toLowerCase()}`);
-            if (prices[s] && pEl) {
-                pEl.innerText = "$" + prices[s].toLocaleString();
-                cEl.innerText = (changes[s] >= 0 ? '+' : '') + changes[s].toFixed(2) + '%';
-                cEl.className = 'price-change ' + (changes[s] >= 0 ? 'up' : 'down');
+        ['bitcoin', 'ethereum'].forEach(id => {
+            let pEl = document.getElementById(`price-${id}`);
+            let cEl = document.getElementById(`change-${id}`);
+            if (prices[id] && pEl) {
+                pEl.innerText = "$" + prices[id].toLocaleString();
+                cEl.innerText = (changes[id] >= 0 ? '+' : '') + changes[id].toFixed(2) + '%';
+                cEl.className = 'price-change ' + (changes[id] >= 0 ? 'up' : 'down');
             }
         });
     }
@@ -246,39 +236,53 @@
         let container = document.getElementById('watchlist'); 
         if (!container) return;
         container.innerHTML = "";
-        watchlist.forEach(s => {
-            const sym = s.toUpperCase();
-            const p = prices[sym] || 0;
-            const c = changes[sym] || 0;
-            const id = s.toLowerCase();
+        watchlist.forEach(item => {
+            const p = prices[item.id] || 0;
+            const c = changes[item.id] || 0;
             container.innerHTML += `
                 <div class="coin-row">
                     <div class="coin-card">
                         <div class="logo-wrapper">
-                            <img src="https://coinicons-api.vercel.app/api/icon/${id}" data-sym="${id}" onerror="handleLogoError(this)">
+                            <img src="https://coinicons-api.vercel.app/api/icon/${item.symbol}" data-sym="${item.symbol}" onerror="handleLogoError(this)">
                         </div>
-                        <div class="info-group"><label>${sym}</label><span class="live-price">$${p.toLocaleString()}</span></div>
-                        <div class="input-box"><input type="text" id="${id}" inputmode="decimal" placeholder="0" oninput="handleInput('${id}')"></div>
+                        <div class="info-group"><label>${item.symbol}</label><span class="live-price">$${p.toLocaleString()}</span></div>
+                        <div class="input-box"><input type="text" id="${item.id}" inputmode="decimal" placeholder="0" oninput="handleInput('${item.id}')"></div>
                         <span class="price-change ${c >= 0 ? 'up' : 'down'}">${c >= 0 ? '+' : ''}${c.toFixed(2)}%</span>
                     </div>
-                    <div class="delete-btn-outside" onclick="removeCoin('${s}')">×</div>
+                    <div class="delete-btn-outside" onclick="removeCoin('${item.id}')">×</div>
                 </div>`;
         });
     }
 
     async function addCoin() {
         let input = document.getElementById('search-input');
-        let s = input.value.toLowerCase().trim();
-        if (!s || watchlist.includes(s)) return;
-        watchlist.push(s);
-        localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
-        input.value = "";
-        await fetchAllPrices();
+        let sym = input.value.toLowerCase().trim();
+        if (!sym) return;
+
+        // Cari ID yang bener
+        let id = autoMap[sym] || sym;
+
+        document.getElementById('status').innerText = "Verifikasi ID...";
+        try {
+            const res = await fetch(`https://api.coingecko.com/api/v3/coins/${id}?localization=false&tickers=false&market_data=false&community_data=false&developer_data=false&sparkline=false`);
+            const coinData = await res.json();
+            
+            if (coinData.id) {
+                if (!watchlist.find(c => c.id === coinData.id)) {
+                    watchlist.push({ id: coinData.id, symbol: coinData.symbol });
+                    localStorage.setItem('kurs_fast_v5', JSON.stringify(watchlist));
+                }
+                input.value = "";
+                await fetchAllPrices();
+            }
+        } catch(e) {
+            alert("Koin gak ketemu! Coba nama lengkapnya (contoh: 'solana', 'ripple', 'deepbook')");
+        }
     }
 
-    function removeCoin(s) {
-        watchlist = watchlist.filter(i => i !== s);
-        localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
+    function removeCoin(id) {
+        watchlist = watchlist.filter(c => c.id !== id);
+        localStorage.setItem('kurs_fast_v5', JSON.stringify(watchlist));
         renderWatchlist();
     }
 
