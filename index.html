@@ -40,7 +40,7 @@
 
         .coin-row { position: relative; width: 100%; margin-bottom: 10px; }
         .coin-card { background: var(--card); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; border: 1px solid #334155; height: 62px; }
-        .logo-wrapper { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 1px solid #475569; background: #000; }
+        .logo-wrapper { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 1px solid #475569; background: #000; display: flex; align-items: center; justify-content: center; }
         .logo-wrapper img { width: 100%; height: 100%; object-fit: cover; }
         
         .info-group { display: flex; flex-direction: column; min-width: 70px; flex-shrink: 0; }
@@ -94,7 +94,7 @@
         <div style="height:10px"></div>
 
         <div class="coin-card" style="border-left: 4px solid #f7931a;">
-            <div class="logo-wrapper"><img src="https://coinicons-api.vercel.app/api/icon/btc" onerror="handleLogoError(this, 'btc')"></div>
+            <div class="logo-wrapper"><img src="https://coinicons-api.vercel.app/api/icon/btc" onerror="handleLogoError(this, 'BTC')"></div>
             <div class="info-group"><label>BTC</label><span id="price-btc" class="live-price">$0</span></div>
             <div class="input-box"><input type="text" id="btc" inputmode="decimal" placeholder="0" oninput="handleInput('btc')"></div>
             <span id="change-btc" class="price-change">--</span>
@@ -102,7 +102,7 @@
         <div style="height:10px"></div>
 
         <div class="coin-card" style="border-left: 4px solid #627eea;">
-            <div class="logo-wrapper"><img src="https://coinicons-api.vercel.app/api/icon/eth" onerror="handleLogoError(this, 'eth')"></div>
+            <div class="logo-wrapper"><img src="https://coinicons-api.vercel.app/api/icon/eth" onerror="handleLogoError(this, 'ETH')"></div>
             <div class="info-group"><label>ETH</label><span id="price-eth" class="live-price">$0</span></div>
             <div class="input-box"><input type="text" id="eth" inputmode="decimal" placeholder="0" oninput="handleInput('eth')"></div>
             <span id="change-eth" class="price-change">--</span>
@@ -124,14 +124,12 @@
     let usdToIdr = parseFloat(localStorage.getItem('last_usd_idr')) || 16000; 
     let prices = { BTC: 0, ETH: 0 };
     let changes = { BTC: 0, ETH: 0 }; 
-    let coinMapCG = {};
     let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
     let lastSource = 'idr';
     let lastRawValue = "";
 
     window.onload = async () => {
         await fetchKurs();
-        await fetchCoinMap();
         fetchAllPrices();
     };
 
@@ -142,7 +140,6 @@
 
     async function fetchKurs() {
         try {
-            // Pake API yang sama kayak APR (CoinGecko) biar sinkron & update
             const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=idr');
             const d = await r.json();
             if(d['usd-coin']?.idr) {
@@ -150,29 +147,27 @@
                 localStorage.setItem('last_usd_idr', usdToIdr);
                 document.getElementById('kurs-live').innerText = `USD/IDR: ${new Intl.NumberFormat('id-ID').format(usdToIdr)}`;
             }
-        } catch(e) {
-            console.log("Kurs offline mode");
-        }
+        } catch(e) { console.log("Kurs offline mode"); }
     }
 
-    async function fetchCoinMap() {
-        try {
-            const r = await fetch('https://api.coingecko.com/api/v3/coins/list');
-            const data = await r.json();
-            data.forEach(c => { coinMapCG[c.symbol.toUpperCase()] = c.id; });
-        } catch(e) {}
-    }
-
+    // DISINI LOGIC LOGO YANG ELU SUKA (Style FI)
     function handleLogoError(img, sym) {
         const retry = parseInt(img.getAttribute('data-retry') || "0");
+        const s = sym.toLowerCase();
         const sources = [
-            `https://coinicons-api.vercel.app/api/icon/${sym.toLowerCase()}`,
-            `https://assets.coincap.io/assets/icons/${sym.toLowerCase()}@2x.png`,
-            `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${sym.toLowerCase()}.png`
+            `https://coinicons-api.vercel.app/api/icon/${s}`,
+            `https://assets.coincap.io/assets/icons/${s}@2x.png`,
+            `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${s}.png`
         ];
+        
         if (retry < sources.length - 1) {
             img.setAttribute('data-retry', retry + 1);
             img.src = sources[retry + 1];
+        } else {
+            // Kalau semua link mati, ganti ke inisial huruf (Style FI)
+            const wrapper = img.parentElement;
+            wrapper.style.background = '#000';
+            wrapper.innerHTML = `<span style="font-size:12px; font-weight:bold; color:var(--accent);">${sym.substring(0,2).toUpperCase()}</span>`;
         }
     }
 
@@ -220,11 +215,13 @@
                 let targetEl = document.getElementById(f);
                 if (!targetEl) return;
                 let res = (f === 'idr') ? baseUsd * usdToIdr : (f === 'usd') ? baseUsd : baseUsd / (prices[f.toUpperCase()] || 1);
+                
                 if (f === 'idr') {
                     targetEl.value = formatWithCommas(Math.round(res).toString());
                 } else {
                     let currentCoinPrice = prices[f.toUpperCase()] || 1;
-                    let dec = (f === 'usd') ? 2 : (currentCoinPrice < 1 ? 6 : 4);
+                    // FIX NOMINAL NOL: Kalau hasil kecil banget, desimalnya otomatis nambah (8 digit)
+                    let dec = (f === 'usd') ? 2 : (res < 0.001 ? 8 : (currentCoinPrice < 1 ? 6 : 4));
                     let formatted = res.toFixed(dec).replace(/\.?0+$/, "");
                     targetEl.value = formatWithCommas(formatted);
                 }
@@ -288,7 +285,7 @@
                 <div class="coin-row">
                     <div class="coin-card">
                         <div class="logo-wrapper">
-                            <img src="https://coinicons-api.vercel.app/api/icon/${id}" onerror="handleLogoError(this, '${id}')">
+                            <img src="https://coinicons-api.vercel.app/api/icon/${id}" onerror="handleLogoError(this, '${sym}')">
                         </div>
                         <div class="info-group">
                             <label>${sym}</label>
