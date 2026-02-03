@@ -99,3 +99,96 @@
                     const t = d.result.list[0];
                     prices[s] = parseFloat(t.lastPrice);
                     changes[s] = ((prices[s] - parseFloat(t.prevPrice24h)) / parseFloat(t.prevPrice24h)) * 100;
+                }
+            } catch(e) { console.log(s + " fetch error"); }
+        }
+        renderAll();
+        if(lastRaw) calculate(lastSource, lastRaw);
+    }
+
+    function renderAll() {
+        const watchContainer = document.getElementById('watchlist');
+        watchContainer.innerHTML = "";
+        
+        watchlist.forEach(s => {
+            const p = prices[s] || 0;
+            const c = changes[s] || 0;
+            const id = s.toLowerCase();
+            const border = s === 'BTC' ? '#f7931a' : (s === 'ETH' ? '#627eea' : '#334155');
+            
+            watchContainer.innerHTML += `
+                <div class="coin-card" style="border-left: 4px solid ${border}">
+                    <div class="logo-wrapper">
+                        <img src="https://coinicons-api.vercel.app/api/icon/${id}" onerror="this.src='${coinGold}'">
+                    </div>
+                    <div class="info-group">
+                        <label>${s}</label>
+                        <span class="live-price">$${p < 1 ? p.toFixed(5) : p.toLocaleString()}</span>
+                    </div>
+                    <div class="input-box"><input type="text" id="${id}" inputmode="decimal" oninput="handleInput('${id}')"></div>
+                    <span class="price-change ${c >= 0 ? 'up' : 'down'}">${c >= 0 ? '+' : ''}${c.toFixed(2)}%</span>
+                    ${(s!=='BTC' && s!=='ETH') ? `<div class="del-btn" onclick="removeCoin('${s}')">×</div>` : ''}
+                </div>`;
+        });
+    }
+
+    function handleInput(id) {
+        let el = document.getElementById(id);
+        let raw = el.value.replace(/,/g, '');
+        if (raw === "") {
+            document.querySelectorAll('input[type="text"]').forEach(i => { if(i.id !== 'search-input') i.value = ""; });
+            lastRaw = ""; return;
+        }
+        lastSource = id; lastRaw = raw;
+        calculate(id, raw);
+        
+        // Format Ribuan (Koma)
+        let cursor = el.selectionStart;
+        let oldLen = el.value.length;
+        let parts = raw.split(".");
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        el.value = parts.join(".");
+        el.setSelectionRange(cursor + (el.value.length - oldLen), cursor + (el.value.length - oldLen));
+    }
+
+    function calculate(src, raw) {
+        let val = parseFloat(raw) || 0;
+        let baseUsd = (src === 'idr') ? val / usdToIdr : (src === 'usd') ? val : val * (prices[src.toUpperCase()] || 0);
+
+        ['idr', 'usd', ...watchlist.map(s => s.toLowerCase())].forEach(f => {
+            if (f !== src) {
+                let target = document.getElementById(f);
+                if (!target) return;
+                let p = prices[f.toUpperCase()] || 1;
+                let res = (f === 'idr') ? baseUsd * usdToIdr : (f === 'usd') ? baseUsd : baseUsd / p;
+                
+                if (f === 'idr') target.value = Math.round(res).toLocaleString('en-US');
+                else {
+                    let dec = (f === 'usd') ? 2 : (p < 1 ? 6 : 4);
+                    let formatted = res.toFixed(dec).replace(/\.?0+$/, "");
+                    let parts = formatted.split(".");
+                    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                    target.value = parts.join(".");
+                }
+            }
+        });
+    }
+
+    function addCoin() {
+        let s = document.getElementById('search-input').value.toUpperCase().trim();
+        if(s && !watchlist.includes(s)) {
+            watchlist.push(s);
+            localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
+            document.getElementById('search-input').value = "";
+            fetchAllPrices();
+        }
+    }
+
+    function removeCoin(s) {
+        watchlist = watchlist.filter(i => i !== s);
+        localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
+        renderAll();
+    }
+</script>
+</body>
+</html>
