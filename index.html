@@ -121,7 +121,6 @@
 </div>
 
 <script>
-    // Paste semua script lu di sini (Sama kaya versi sebelumnya)
     let usdToIdr = parseFloat(localStorage.getItem('last_usd_idr')) || 16000; 
     let prices = { BTC: 0, ETH: 0 };
     let changes = { BTC: 0, ETH: 0 }; 
@@ -161,8 +160,7 @@
         const sources = [
             `https://coinicons-api.vercel.app/api/icon/${sym.toLowerCase()}`,
             `https://assets.coincap.io/assets/icons/${sym.toLowerCase()}@2x.png`,
-            `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${sym.toLowerCase()}.png`,
-            `https://cdn-icons-png.flaticon.com/512/1041/1041888.png`
+            `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${sym.toLowerCase()}.png`
         ];
         if (retry < sources.length - 1) {
             img.setAttribute('data-retry', retry + 1);
@@ -214,7 +212,6 @@
                 let targetEl = document.getElementById(f);
                 if (!targetEl) return;
                 let res = (f === 'idr') ? baseUsd * usdToIdr : (f === 'usd') ? baseUsd : baseUsd / (prices[f.toUpperCase()] || 1);
-                
                 if (f === 'idr') {
                     targetEl.value = formatWithCommas(Math.round(res).toString());
                 } else {
