@@ -10,7 +10,13 @@
       "src": "https://fonts.gstatic.com/s/i/short-term/release/googlestdicons/currency_exchange/v1/512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "https://fonts.gstatic.com/s/i/short-term/release/googlestdicons/currency_exchange/v1/512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
