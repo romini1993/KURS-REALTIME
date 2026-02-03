@@ -86,9 +86,7 @@
         <div style="height:10px"></div>
 
         <div class="coin-card" style="border-left: 4px solid #f7931a;">
-            <div class="logo-wrapper">
-                <img src="https://coinicons-api.vercel.app/api/icon/btc" onerror="handleLogoError(this, 'btc')">
-            </div>
+            <div class="logo-wrapper"><img src="https://coinicons-api.vercel.app/api/icon/btc" onerror="handleLogoError(this, 'btc')"></div>
             <div class="info-group"><label>BTC</label><span id="price-btc" class="live-price">$0</span></div>
             <div class="input-box"><input type="text" id="btc" inputmode="decimal" placeholder="0" oninput="handleInput('btc')"></div>
             <span id="change-btc" class="price-change">--</span>
@@ -96,9 +94,7 @@
         <div style="height:10px"></div>
 
         <div class="coin-card" style="border-left: 4px solid #627eea;">
-            <div class="logo-wrapper">
-                <img src="https://coinicons-api.vercel.app/api/icon/eth" onerror="handleLogoError(this, 'eth')">
-            </div>
+            <div class="logo-wrapper"><img src="https://coinicons-api.vercel.app/api/icon/eth" onerror="handleLogoError(this, 'eth')"></div>
             <div class="info-group"><label>ETH</label><span id="price-eth" class="live-price">$0</span></div>
             <div class="input-box"><input type="text" id="eth" inputmode="decimal" placeholder="0" oninput="handleInput('eth')"></div>
             <span id="change-eth" class="price-change">--</span>
@@ -109,7 +105,7 @@
     
     <div class="search-section">
         <div class="search-box">
-            <input type="text" id="search-input" placeholder="Tambah koin...">
+            <input type="text" id="search-input" placeholder="Nama koin (ex: sui, sol, deep)">
             <button class="add-btn" onclick="addCoin()">Tambah</button>
         </div>
         <div id="status" class="status-info">Ready, Bro!</div>
@@ -120,11 +116,14 @@
     let usdToIdr = parseFloat(localStorage.getItem('last_usd_idr')) || 16000; 
     let prices = { BTC: 0, ETH: 0 };
     let changes = { BTC: 0, ETH: 0 }; 
-    let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
+    let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v4')) || [];
     let lastSource = 'idr';
     let lastRawValue = "";
 
-    // FUNGSI SAKTI LOGO DARI PORTOFOLIO ELU
+    // MAPPING UNTUK COINGECKO ID (Kalo input 'sui' dia cari 'sui')
+    // Coingecko biasanya pake id btc=bitcoin, eth=ethereum
+    const cgMapping = { 'BTC': 'bitcoin', 'ETH': 'ethereum', 'SUI': 'sui', 'SOL': 'solana', 'DEEP': 'deepbook' };
+
     function handleLogoError(img, sym) {
         const retry = parseInt(img.getAttribute('data-retry') || "0");
         const sources = [
@@ -151,11 +150,9 @@
         let raw = el.value.replace(/,/g, '');
         if (raw === "") {
             document.querySelectorAll('input[type="text"]').forEach(i => { if(i.id !== 'search-input') i.value = ""; });
-            lastRawValue = "";
-            return;
+            lastRawValue = ""; return;
         }
-        lastSource = id;
-        lastRawValue = raw;
+        lastSource = id; lastRawValue = raw;
         calculateKurs(id, raw);
         let cursor = el.selectionStart;
         let oldLen = el.value.length;
@@ -176,50 +173,55 @@
             if (f !== source) {
                 let targetEl = document.getElementById(f);
                 if (!targetEl) return;
-                let res = 0;
-                if (f === 'idr') res = baseUsd * usdToIdr;
-                else if (f === 'usd') res = baseUsd;
-                else res = baseUsd / (prices[f.toUpperCase()] || 1);
-
-                if (f === 'idr') {
-                    targetEl.value = formatWithCommas(Math.round(res).toString());
-                } else {
+                let res = (f === 'idr') ? baseUsd * usdToIdr : (f === 'usd') ? baseUsd : baseUsd / (prices[f.toUpperCase()] || 1);
+                if (f === 'idr') targetEl.value = formatWithCommas(Math.round(res).toString());
+                else {
                     let dec = (f === 'usd') ? 2 : 6;
-                    let formatted = res.toFixed(dec).replace(/\.?0+$/, "");
-                    targetEl.value = formatWithCommas(formatted);
+                    targetEl.value = formatWithCommas(res.toFixed(dec).replace(/\.?0+$/, ""));
                 }
             }
         });
     }
 
     async function fetchAllPrices() {
-        document.getElementById('status').innerText = "Updating...";
+        document.getElementById('status').innerText = "Syncing with CoinGecko...";
         try {
-            const rKurs = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=idr');
-            const dKurs = await rKurs.json(); 
-            if(dKurs['usd-coin']?.idr) {
-                usdToIdr = dKurs['usd-coin'].idr;
+            // 1. Fetch Kurs USD + BTC + ETH + Watchlist sekaligus
+            const ids = ['usd-coin', 'bitcoin', 'ethereum'];
+            watchlist.forEach(s => {
+                let mapped = cgMapping[s.toUpperCase()] || s.toLowerCase();
+                ids.push(mapped);
+            });
+
+            const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd,idr&include_24hr_change=true`);
+            const data = await response.json();
+
+            // Update USD/IDR
+            if(data['usd-coin']) {
+                usdToIdr = data['usd-coin'].idr;
                 localStorage.setItem('last_usd_idr', usdToIdr);
                 document.getElementById('kurs-live').innerText = `USD/IDR: ${new Intl.NumberFormat('id-ID').format(usdToIdr)}`;
             }
-        } catch(e) {}
 
-        const symbols = ['BTC', 'ETH', ...watchlist];
-        for (let s of symbols) {
-            try {
-                const response = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${s.toUpperCase()}USDT`);
-                const data = await response.json();
-                if (data.result?.list?.[0]) {
-                    const t = data.result.list[0];
-                    prices[s.toUpperCase()] = parseFloat(t.lastPrice);
-                    changes[s.toUpperCase()] = ((parseFloat(t.lastPrice) - parseFloat(t.prevPrice24h)) / parseFloat(t.prevPrice24h)) * 100;
+            // Update Prices Logic
+            const updatePrice = (sym, cgId) => {
+                if(data[cgId]) {
+                    prices[sym] = data[cgId].usd;
+                    changes[sym] = data[cgId].usd_24h_change || 0;
                 }
-            } catch(e) {}
+            };
+
+            updatePrice('BTC', 'bitcoin');
+            updatePrice('ETH', 'ethereum');
+            watchlist.forEach(s => updatePrice(s.toUpperCase(), cgMapping[s.toUpperCase()] || s.toLowerCase()));
+
+            renderWatchlist();
+            updateFixedUI();
+            if (lastRawValue) calculateKurs(lastSource, lastRawValue);
+            document.getElementById('status').innerText = "Update: " + new Date().toLocaleTimeString();
+        } catch(e) {
+            document.getElementById('status').innerText = "API Limit / Error";
         }
-        renderWatchlist();
-        updateFixedUI();
-        if (lastRawValue) calculateKurs(lastSource, lastRawValue);
-        document.getElementById('status').innerText = "Update: " + new Date().toLocaleTimeString();
     }
 
     function updateFixedUI() {
@@ -248,7 +250,7 @@
                         <div class="logo-wrapper">
                             <img src="https://coinicons-api.vercel.app/api/icon/${id}" onerror="handleLogoError(this, '${id}')">
                         </div>
-                        <div class="info-group"><label>${s}</label><span class="live-price">$${p.toLocaleString()}</span></div>
+                        <div class="info-group"><label>${s.toUpperCase()}</label><span class="live-price">$${p.toLocaleString()}</span></div>
                         <div class="input-box"><input type="text" id="${id}" inputmode="decimal" placeholder="0" oninput="handleInput('${id}')"></div>
                         <span class="price-change ${c >= 0 ? 'up' : 'down'}">${c >= 0 ? '+' : ''}${c.toFixed(2)}%</span>
                     </div>
@@ -259,10 +261,10 @@
 
     async function addCoin() {
         let input = document.getElementById('search-input');
-        let s = input.value.toUpperCase().trim();
+        let s = input.value.toLowerCase().trim();
         if (!s || watchlist.includes(s)) return;
         watchlist.push(s);
-        localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
+        localStorage.setItem('kurs_fast_v4', JSON.stringify(watchlist));
         input.value = "";
         await fetchAllPrices();
     }
