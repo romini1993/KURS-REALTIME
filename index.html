@@ -165,8 +165,9 @@
         }
     }
 
+    // --- PERBAIKAN FORMATTING ANGKA 0 DI DEPAN DESIMAL ---
     function formatWithCommas(val) {
-        if (!val || val === "0") return "";
+        if (val === undefined || val === null || val === "") return "";
         let parts = val.toString().split(".");
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         return parts.join(".");
@@ -175,12 +176,22 @@
     function handleInput(id) {
         let el = document.getElementById(id);
         let raw = el.value.replace(/,/g, '');
+        
         if (raw === "") {
             document.querySelectorAll('input[type="text"]').forEach(i => { if(i.id !== 'search-input') i.value = ""; });
             lastRawValue = ""; return;
         }
-        lastSource = id; lastRawValue = raw;
+
+        // Biar bisa ngetik "0." tanpa kehapus
+        if (raw === "0") {
+            lastRawValue = "0";
+        } else {
+            lastRawValue = raw;
+        }
+
+        lastSource = id;
         calculateKurs(id, raw);
+
         let cursor = el.selectionStart;
         let oldLen = el.value.length;
         el.value = formatWithCommas(raw);
@@ -201,10 +212,13 @@
                 let targetEl = document.getElementById(f);
                 if (!targetEl) return;
                 let res = (f === 'idr') ? baseUsd * usdToIdr : (f === 'usd') ? baseUsd : baseUsd / (prices[f.toUpperCase()] || 1);
-                if (f === 'idr') targetEl.value = formatWithCommas(Math.round(res).toString());
-                else {
+                
+                if (f === 'idr') {
+                    targetEl.value = formatWithCommas(Math.round(res).toString());
+                } else {
                     let dec = (f === 'usd') ? 2 : 6;
-                    targetEl.value = formatWithCommas(res.toFixed(dec).replace(/\.?0+$/, ""));
+                    let formatted = res.toFixed(dec).replace(/\.?0+$/, "");
+                    targetEl.value = formatWithCommas(formatted);
                 }
             }
         });
@@ -217,7 +231,6 @@
         for (let s of symbols) {
             try {
                 let found = false;
-                // 1. Cek Bybit
                 const rb = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${s.toUpperCase()}USDT`);
                 const db = await rb.json();
                 if(db.result?.list?.[0] && db.result.list[0].lastPrice !== "") {
@@ -226,8 +239,6 @@
                     changes[s] = ((prices[s] - parseFloat(t.prevPrice24h)) / parseFloat(t.prevPrice24h)) * 100;
                     found = true;
                 }
-                
-                // 2. Cek Binance
                 if(!found) {
                     const rs = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${s.toUpperCase()}USDT`);
                     const ds = await rs.json();
@@ -237,8 +248,6 @@
                         found = true;
                     }
                 }
-
-                // 3. Cek CoinGecko (Backup Koin 130an)
                 if(!found && coinMapCG[s]) {
                     const rcg = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinMapCG[s]}&vs_currencies=usd&include_24hr_change=true`);
                     const dcg = await rcg.json();
@@ -252,7 +261,7 @@
 
         renderWatchlist();
         updateFixedUI();
-        if (lastRawValue) calculateKurs(lastSource, lastRawValue);
+        if (lastRawValue !== "") calculateKurs(lastSource, lastRawValue);
         document.getElementById('status').innerText = "Last Update: " + new Date().toLocaleTimeString();
     }
 
