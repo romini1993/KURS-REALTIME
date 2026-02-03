@@ -26,7 +26,7 @@
         .refresh-btn { background: var(--card); border: 1px solid var(--accent); color: var(--accent); padding: 8px 14px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: bold; }
         .coin-row { position: relative; width: 100%; margin-bottom: 10px; }
         .coin-card { background: var(--card); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; border: 1px solid #334155; height: 62px; }
-        .logo-wrapper { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 1px solid #475569; background: #000; }
+        .logo-wrapper { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 1px solid #475569; background: #000; display: flex; align-items: center; justify-content: center; }
         .logo-wrapper img { width: 100%; height: 100%; object-fit: cover; }
         .info-group { display: flex; flex-direction: column; min-width: 70px; flex-shrink: 0; }
         .info-group label { font-size: 11px; color: var(--subtext); font-weight: bold; text-transform: uppercase; }
@@ -68,14 +68,14 @@
         </div>
         <div style="height:10px"></div>
         <div class="coin-card" style="border-left: 4px solid #f7931a;">
-            <div class="logo-wrapper"><img src="https://coinicons-api.vercel.app/api/icon/btc"></div>
+            <div class="logo-wrapper"><img src="https://assets.coincap.io/assets/icons/btc@2x.png" onerror="handleLogoError(this, 'btc')"></div>
             <div class="info-group"><label>BTC</label><span id="price-btc" class="live-price">$0</span></div>
             <div class="input-box"><input type="text" id="btc" inputmode="decimal" placeholder="0" oninput="handleInput('btc')"></div>
             <span id="change-btc" class="price-change">--</span>
         </div>
         <div style="height:10px"></div>
         <div class="coin-card" style="border-left: 4px solid #627eea;">
-            <div class="logo-wrapper"><img src="https://coinicons-api.vercel.app/api/icon/eth"></div>
+            <div class="logo-wrapper"><img src="https://assets.coincap.io/assets/icons/eth@2x.png" onerror="handleLogoError(this, 'eth')"></div>
             <div class="info-group"><label>ETH</label><span id="price-eth" class="live-price">$0</span></div>
             <div class="input-box"><input type="text" id="eth" inputmode="decimal" placeholder="0" oninput="handleInput('eth')"></div>
             <span id="change-eth" class="price-change">--</span>
@@ -136,6 +136,24 @@
         document.getElementById('status').innerText = "Last Update: " + new Date().toLocaleTimeString();
     }
 
+    function handleLogoError(img, sym) {
+        const retry = parseInt(img.getAttribute('data-retry') || "0");
+        const s = sym.toLowerCase();
+        // Daftar sumber logo backup yang lebih stabil
+        const sources = [
+            `https://assets.coincap.io/assets/icons/${s}@2x.png`,
+            `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${s}.png`,
+            `https://api.binance.com/api/v3/asset/getAssetIcon?assetName=${s.toUpperCase()}`
+        ];
+        if (retry < sources.length - 1) {
+            img.setAttribute('data-retry', retry + 1);
+            img.src = sources[retry + 1];
+        } else {
+            // Kalau semua gagal, kasih inisial huruf aja
+            img.parentElement.innerHTML = `<span style="font-size:12px; font-weight:bold; color:white;">${sym.substring(0,2)}</span>`;
+        }
+    }
+
     function updateFixedUI() {
         ['BTC', 'ETH'].forEach(s => {
             let pEl = document.getElementById(`price-${s.toLowerCase()}`);
@@ -183,7 +201,6 @@
                 if (f === 'idr') {
                     targetEl.value = formatWithCommas(Math.round(res).toString());
                 } else {
-                    // LOGIC DESIMAL PINTAR MULAI SINI
                     let dec = 2;
                     if (f !== 'usd') {
                         if (res < 0.000001) dec = 10;
@@ -221,8 +238,13 @@
             container.innerHTML += `
                 <div class="coin-row">
                     <div class="coin-card">
-                        <div class="logo-wrapper"><img src="https://coinicons-api.vercel.app/api/icon/${id}"></div>
-                        <div class="info-group"><label>${sym}</label><span class="live-price">${formatPriceDisplay(p)}</span></div>
+                        <div class="logo-wrapper">
+                            <img src="https://assets.coincap.io/assets/icons/${id}@2x.png" onerror="handleLogoError(this, '${sym}')">
+                        </div>
+                        <div class="info-group">
+                            <label>${sym}</label>
+                            <span class="live-price">${formatPriceDisplay(p)}</span>
+                        </div>
                         <div class="input-box"><input type="text" id="${id}" inputmode="decimal" placeholder="0" oninput="handleInput('${id}')"></div>
                         <span class="price-change ${c >= 0 ? 'up' : 'down'}">${c >= 0 ? '+' : ''}${c.toFixed(2)}%</span>
                     </div>
