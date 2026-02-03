@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-title" content="KURS">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2454/2454269.png">
     <meta name="theme-color" content="#0f172a">
-    <title>KURS PRO</title>
+    <title>KURS PRO PRECISION</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -41,7 +41,7 @@
         
         .info-group { display: flex; flex-direction: column; min-width: 70px; flex-shrink: 0; }
         .info-group label { font-size: 11px; color: var(--subtext); font-weight: bold; text-transform: uppercase; }
-        .live-price { font-size: 10px; font-weight: bold; color: var(--accent); }
+        .live-price { font-size: 10px; font-weight: bold; color: var(--accent); white-space: nowrap; }
         
         .input-box { flex: 1; min-width: 0; }
         input { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid #334155; border-radius: 6px; color: white; font-size: 16px; font-weight: bold; outline: none; padding: 6px 8px; }
@@ -165,7 +165,6 @@
         }
     }
 
-    // --- PERBAIKAN FORMATTING ANGKA 0 DI DEPAN DESIMAL ---
     function formatWithCommas(val) {
         if (val === undefined || val === null || val === "") return "";
         let parts = val.toString().split(".");
@@ -173,25 +172,25 @@
         return parts.join(".");
     }
 
+    // Fungsi canggih untuk nampilin harga micin (sampai 6 desimal)
+    function formatPriceDisplay(p) {
+        if (p >= 1) {
+            return "$" + p.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        } else {
+            // Untuk koin di bawah $1, tampilkan hingga 6 desimal tanpa 0 yang tidak perlu di belakang
+            return "$" + p.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 6});
+        }
+    }
+
     function handleInput(id) {
         let el = document.getElementById(id);
         let raw = el.value.replace(/,/g, '');
-        
         if (raw === "") {
             document.querySelectorAll('input[type="text"]').forEach(i => { if(i.id !== 'search-input') i.value = ""; });
             lastRawValue = ""; return;
         }
-
-        // Biar bisa ngetik "0." tanpa kehapus
-        if (raw === "0") {
-            lastRawValue = "0";
-        } else {
-            lastRawValue = raw;
-        }
-
-        lastSource = id;
+        lastSource = id; lastRawValue = raw;
         calculateKurs(id, raw);
-
         let cursor = el.selectionStart;
         let oldLen = el.value.length;
         el.value = formatWithCommas(raw);
@@ -216,7 +215,9 @@
                 if (f === 'idr') {
                     targetEl.value = formatWithCommas(Math.round(res).toString());
                 } else {
-                    let dec = (f === 'usd') ? 2 : 6;
+                    // Logika presisi: koin di bawah 1 dollar kasih desimal banyak
+                    let currentCoinPrice = prices[f.toUpperCase()] || 1;
+                    let dec = (f === 'usd') ? 2 : (currentCoinPrice < 1 ? 6 : 4);
                     let formatted = res.toFixed(dec).replace(/\.?0+$/, "");
                     targetEl.value = formatWithCommas(formatted);
                 }
@@ -261,7 +262,7 @@
 
         renderWatchlist();
         updateFixedUI();
-        if (lastRawValue !== "") calculateKurs(lastSource, lastRawValue);
+        if (lastRawValue) calculateKurs(lastSource, lastRawValue);
         document.getElementById('status').innerText = "Last Update: " + new Date().toLocaleTimeString();
     }
 
@@ -270,7 +271,7 @@
             let pEl = document.getElementById(`price-${s.toLowerCase()}`);
             let cEl = document.getElementById(`change-${s.toLowerCase()}`);
             if (prices[s] && pEl) {
-                pEl.innerText = "$" + prices[s].toLocaleString();
+                pEl.innerText = formatPriceDisplay(prices[s]);
                 cEl.innerText = (changes[s] >= 0 ? '+' : '') + changes[s].toFixed(2) + '%';
                 cEl.className = 'price-change ' + (changes[s] >= 0 ? 'up' : 'down');
             }
@@ -292,7 +293,10 @@
                         <div class="logo-wrapper">
                             <img src="https://coinicons-api.vercel.app/api/icon/${id}" onerror="handleLogoError(this, '${id}')">
                         </div>
-                        <div class="info-group"><label>${sym}</label><span class="live-price">$${p.toLocaleString()}</span></div>
+                        <div class="info-group">
+                            <label>${sym}</label>
+                            <span class="live-price">${formatPriceDisplay(p)}</span>
+                        </div>
                         <div class="input-box"><input type="text" id="${id}" inputmode="decimal" placeholder="0" oninput="handleInput('${id}')"></div>
                         <span class="price-change ${c >= 0 ? 'up' : 'down'}">${c >= 0 ? '+' : ''}${c.toFixed(2)}%</span>
                     </div>
