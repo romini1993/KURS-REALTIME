@@ -1,5 +1,5 @@
 {
-  "name": "KURS",
+  "name": "KURS PRO",
   "short_name": "KURS",
   "start_url": "index.html",
   "display": "standalone",
@@ -7,10 +7,16 @@
   "theme_color": "#0f172a",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2454/2454269.png",
+      "src": "https://fonts.gstatic.com/s/i/short-term/release/googlestdicons/currency_exchange/v1/512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "https://fonts.gstatic.com/s/i/short-term/release/googlestdicons/currency_exchange/v1/512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
