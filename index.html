@@ -68,14 +68,14 @@
         </div>
         <div style="height:10px"></div>
         <div class="coin-card" style="border-left: 4px solid #f7931a;">
-            <div class="logo-wrapper"><img src="https://assets.coincap.io/assets/icons/btc@2x.png" onerror="handleLogoError(this, 'btc')"></div>
+            <div class="logo-wrapper"><img src="https://assets.coincap.io/assets/icons/btc@2x.png" onerror="handleLogoError(this, 'BTC')"></div>
             <div class="info-group"><label>BTC</label><span id="price-btc" class="live-price">$0</span></div>
             <div class="input-box"><input type="text" id="btc" inputmode="decimal" placeholder="0" oninput="handleInput('btc')"></div>
             <span id="change-btc" class="price-change">--</span>
         </div>
         <div style="height:10px"></div>
         <div class="coin-card" style="border-left: 4px solid #627eea;">
-            <div class="logo-wrapper"><img src="https://assets.coincap.io/assets/icons/eth@2x.png" onerror="handleLogoError(this, 'eth')"></div>
+            <div class="logo-wrapper"><img src="https://assets.coincap.io/assets/icons/eth@2x.png" onerror="handleLogoError(this, 'ETH')"></div>
             <div class="info-group"><label>ETH</label><span id="price-eth" class="live-price">$0</span></div>
             <div class="input-box"><input type="text" id="eth" inputmode="decimal" placeholder="0" oninput="handleInput('eth')"></div>
             <span id="change-eth" class="price-change">--</span>
@@ -95,15 +95,28 @@
     let usdToIdr = parseFloat(localStorage.getItem('last_usd_idr')) || 16000;
     let prices = { BTC: 0, ETH: 0 };
     let changes = { BTC: 0, ETH: 0 };
+    let coinMapCG = JSON.parse(localStorage.getItem('coin_map_v3')) || {};
     let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
     let lastSource = 'idr'; let lastRawValue = "";
 
-    window.onload = () => { updateSemua(); };
+    window.onload = async () => {
+        if (Object.keys(coinMapCG).length === 0) await fetchCoinMap();
+        updateSemua();
+    };
 
     async function updateSemua() {
         document.getElementById('status').innerText = "Updating...";
         await fetchKurs();
         await fetchAllPrices();
+    }
+
+    async function fetchCoinMap() {
+        try {
+            const r = await fetch('https://api.coingecko.com/api/v3/coins/list');
+            const data = await r.json();
+            data.forEach(c => { coinMapCG[c.symbol.toUpperCase()] = c.id; });
+            localStorage.setItem('coin_map_v3', JSON.stringify(coinMapCG));
+        } catch(e) { console.log("Map error"); }
     }
 
     async function fetchKurs() {
@@ -120,16 +133,22 @@
 
     async function fetchAllPrices() {
         const symbols = ['BTC', 'ETH', ...watchlist];
-        for (let s of symbols) {
-            try {
-                const rs = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${s.toUpperCase()}USDT`);
-                const ds = await rs.json();
-                if(ds.lastPrice) {
-                    prices[s.toUpperCase()] = parseFloat(ds.lastPrice);
-                    changes[s.toUpperCase()] = parseFloat(ds.priceChangePercent);
+        const cgIds = symbols.map(s => coinMapCG[s.toUpperCase()]).filter(id => id).join(',');
+        
+        try {
+            // Pake CoinGecko biar koin micin/baru tetep muncul harganya
+            const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cgIds}&vs_currencies=usd&include_24hr_change=true`);
+            const data = await r.json();
+            
+            symbols.forEach(s => {
+                const id = coinMapCG[s.toUpperCase()];
+                if (data[id]) {
+                    prices[s.toUpperCase()] = data[id].usd;
+                    changes[s.toUpperCase()] = data[id].usd_24h_change || 0;
                 }
-            } catch(e) { console.log("Error fetch koin:", s); }
-        }
+            });
+        } catch(e) { console.log("Price fetch error"); }
+
         renderWatchlist();
         updateFixedUI();
         if (lastRawValue) calculateKurs(lastSource, lastRawValue);
@@ -139,18 +158,18 @@
     function handleLogoError(img, sym) {
         const retry = parseInt(img.getAttribute('data-retry') || "0");
         const s = sym.toLowerCase();
-        // Daftar sumber logo backup yang lebih stabil
         const sources = [
             `https://assets.coincap.io/assets/icons/${s}@2x.png`,
-            `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${s}.png`,
-            `https://api.binance.com/api/v3/asset/getAssetIcon?assetName=${s.toUpperCase()}`
+            `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${s}.png`
         ];
-        if (retry < sources.length - 1) {
+        if (retry < sources.length) {
             img.setAttribute('data-retry', retry + 1);
-            img.src = sources[retry + 1];
+            img.src = sources[retry];
         } else {
-            // Kalau semua gagal, kasih inisial huruf aja
-            img.parentElement.innerHTML = `<span style="font-size:12px; font-weight:bold; color:white;">${sym.substring(0,2)}</span>`;
+            // Ikon hitam dengan 2 huruf depan (Style yang elu suka)
+            img.style.display = 'none';
+            img.parentElement.style.background = '#000';
+            img.parentElement.innerHTML = `<span style="font-size:12px; font-weight:bold; color:var(--accent);">${sym.substring(0,2).toUpperCase()}</span>`;
         }
     }
 
@@ -256,9 +275,13 @@
     async function addCoin() {
         let input = document.getElementById('search-input');
         let s = input.value.toUpperCase().trim();
-        if (!s || watchlist.includes(s)) return;
-        watchlist.push(s);
-        localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
+        if (!s) return;
+        if (!coinMapCG[s]) await fetchCoinMap();
+        if (!coinMapCG[s]) { alert("Koin tidak ditemukan di CoinGecko!"); return; }
+        if (!watchlist.includes(s)) {
+            watchlist.push(s);
+            localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
+        }
         input.value = "";
         await fetchAllPrices();
     }
