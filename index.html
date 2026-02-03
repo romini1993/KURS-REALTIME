@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -121,7 +122,7 @@
 </div>
 
 <script>
-    let usdToIdr = parseFloat(localStorage.getItem('last_usd_idr')) || 16700; 
+    let usdToIdr = parseFloat(localStorage.getItem('last_usd_idr')) || 16000; 
     let prices = { BTC: 0, ETH: 0 };
     let changes = { BTC: 0, ETH: 0 }; 
     let coinMapCG = {};
@@ -135,17 +136,16 @@
         fetchAllPrices();
     };
 
-    // --- FIX KURS BIAR UPDATE ---
     async function fetchKurs() {
         try {
-            const r = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+            const r = await fetch('https://open.er-api.com/v6/latest/USD');
             const d = await r.json();
             if(d.rates?.IDR) {
                 usdToIdr = d.rates.IDR;
                 localStorage.setItem('last_usd_idr', usdToIdr);
                 document.getElementById('kurs-live').innerText = `USD/IDR: ${Math.round(usdToIdr).toLocaleString('id-ID')}`;
             }
-        } catch(e) { console.log("Gagal update kurs"); }
+        } catch(e) {}
     }
 
     async function fetchCoinMap() {
@@ -156,9 +156,17 @@
         } catch(e) {}
     }
 
-    // --- FIX LOGO KE KOIN EMAS ---
     function handleLogoError(img, sym) {
-        img.src = "https://static.vecteezy.com/system/resources/previews/004/252/653/non_2x/coin-icon-logo-illustration-money-stacked-coins-symbol-template-for-graphic-and-web-design-collection-free-vector.jpg";
+        const retry = parseInt(img.getAttribute('data-retry') || "0");
+        const sources = [
+            `https://coinicons-api.vercel.app/api/icon/${sym.toLowerCase()}`,
+            `https://assets.coincap.io/assets/icons/${sym.toLowerCase()}@2x.png`,
+            `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${sym.toLowerCase()}.png`
+        ];
+        if (retry < sources.length - 1) {
+            img.setAttribute('data-retry', retry + 1);
+            img.src = sources[retry + 1];
+        }
     }
 
     function formatWithCommas(val) {
@@ -225,11 +233,20 @@
                 let found = false;
                 const rb = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${s.toUpperCase()}USDT`);
                 const db = await rb.json();
-                if(db.result?.list?.[0]) {
+                if(db.result?.list?.[0] && db.result.list[0].lastPrice !== "") {
                     const t = db.result.list[0];
                     prices[s] = parseFloat(t.lastPrice);
                     changes[s] = ((prices[s] - parseFloat(t.prevPrice24h)) / parseFloat(t.prevPrice24h)) * 100;
                     found = true;
+                }
+                if(!found) {
+                    const rs = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${s.toUpperCase()}USDT`);
+                    const ds = await rs.json();
+                    if(ds.lastPrice) {
+                        prices[s] = parseFloat(ds.lastPrice);
+                        changes[s] = parseFloat(ds.priceChangePercent);
+                        found = true;
+                    }
                 }
                 if(!found && coinMapCG[s]) {
                     const rcg = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinMapCG[s]}&vs_currencies=usd&include_24hr_change=true`);
