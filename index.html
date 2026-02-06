@@ -95,12 +95,14 @@
 </div>
 
 <script>
-    // REGISTRASI SERVICE WORKER BIAR BISA DIINSTALL
+    // --- PENDAFTARAN SERVICE WORKER BIAR BISA DI-INSTALL (SATSET) ---
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('PWA Aktif, Bro Minas!'))
-                .catch(err => console.log('PWA Gagal:', err));
+            navigator.serviceWorker.register('./sw.js').then(reg => {
+                console.log('PWA Registered');
+            }).catch(err => {
+                console.log('PWA Registration Failed', err);
+            });
         });
     }
 
