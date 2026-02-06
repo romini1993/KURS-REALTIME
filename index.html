@@ -95,6 +95,15 @@
 </div>
 
 <script>
+    // REGISTRASI SERVICE WORKER BIAR BISA DIINSTALL
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('PWA Aktif, Bro Minas!'))
+                .catch(err => console.log('PWA Gagal:', err));
+        });
+    }
+
     let usdToIdr = parseFloat(localStorage.getItem('last_usd_idr')) || 16000; 
     let prices = { BTC: 0, ETH: 0 };
     let changes = { BTC: 0, ETH: 0 }; 
@@ -175,12 +184,10 @@
                 if (f === 'idr') {
                     targetEl.value = formatWithCommas(Math.round(res).toString());
                 } else {
-                    // FIX: Sekarang USD juga pinter desimalnya
                     let dec = 2;
                     if (res < 0.0001) dec = 8;
                     else if (res < 0.01) dec = 6;
                     else if (res < 1) dec = 4;
-                    
                     targetEl.value = formatWithCommas(res.toFixed(dec).replace(/\.?0+$/, ""));
                 }
             }
