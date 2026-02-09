@@ -105,7 +105,6 @@
 </div>
 
 <script>
-    // --- PENDAFTARAN SERVICE WORKER BIAR BISA DI-INSTALL (SATSET) ---
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js').then(reg => {
@@ -288,14 +287,21 @@
         }
     }
 
-    // --- FUNGSI BARU BACKUP & RESTORE ---
     function exportData() {
+        const now = new Date();
+        const dateStr = now.getFullYear().toString() + 
+                        (now.getMonth() + 1).toString().padStart(2, '0') + 
+                        now.getDate().toString().padStart(2, '0') + "_" +
+                        now.getHours().toString().padStart(2, '0') +
+                        now.getMinutes().toString().padStart(2, '0') +
+                        now.getSeconds().toString().padStart(2, '0');
+        const fileName = `KURS_${dateStr}.json`;
         const data = JSON.stringify(watchlist);
         const blob = new Blob([data], {type: 'application/json'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'kurs_watchlist_backup.json';
+        a.download = fileName;
         a.click();
     }
 
