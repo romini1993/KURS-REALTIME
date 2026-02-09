@@ -44,6 +44,10 @@
         .search-box input { background: var(--card); border: 1px solid #334155; border-radius: 10px; padding: 12px; color: white !important; width: 100%; font-size: 14px; }
         .add-btn { background: var(--accent); border: none; color: #0f172a; border-radius: 10px; padding: 0 15px; font-weight: bold; cursor: pointer; }
         .status-info { font-size: 11px; color: var(--subtext); text-align: center; margin-top: 10px; }
+        
+        /* Tambahan style dikit buat tombol backup */
+        .backup-section { display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
+        .btn-backup { background: transparent; border: 1px solid #334155; color: var(--subtext); padding: 5px 10px; border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -90,6 +94,12 @@
             <input type="text" id="search-input" placeholder="Tambah koin (misal: SUI, SOL, XRP)">
             <button class="add-btn" onclick="addCoin()">Tambah</button>
         </div>
+        
+        <div class="backup-section">
+            <button class="btn-backup" onclick="exportData()">📥 Backup List</button>
+            <button class="btn-backup" onclick="importData()">📤 Restore List</button>
+        </div>
+
         <div id="status" class="status-info">Ready, Bro!</div>
     </div>
 </div>
@@ -276,6 +286,39 @@
             localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
             renderWatchlist();
         }
+    }
+
+    // --- FUNGSI BARU BACKUP & RESTORE ---
+    function exportData() {
+        const data = JSON.stringify(watchlist);
+        const blob = new Blob([data], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'kurs_watchlist_backup.json';
+        a.click();
+    }
+
+    function importData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = event => {
+                try {
+                    const imported = JSON.parse(event.target.result);
+                    if (Array.isArray(imported)) {
+                        watchlist = imported;
+                        localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
+                        location.reload();
+                    } else { alert("File nggak valid, Bro!"); }
+                } catch(e) { alert("Gagal baca file!"); }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
     }
 </script>
 </body>
