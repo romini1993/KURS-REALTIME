@@ -45,7 +45,6 @@
         .add-btn { background: var(--accent); border: none; color: #0f172a; border-radius: 10px; padding: 0 15px; font-weight: bold; cursor: pointer; }
         .status-info { font-size: 11px; color: var(--subtext); text-align: center; margin-top: 10px; }
         
-        /* Tambahan style dikit buat tombol backup */
         .backup-section { display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
         .btn-backup { background: transparent; border: 1px solid #334155; color: var(--subtext); padding: 5px 10px; border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold; }
     </style>
@@ -295,7 +294,13 @@
                         now.getHours().toString().padStart(2, '0') +
                         now.getMinutes().toString().padStart(2, '0') +
                         now.getSeconds().toString().padStart(2, '0');
-        const fileName = `KURS_${dateStr}.json`;
+        
+        const defaultName = `KURS_${dateStr}`;
+        const newName = prompt("Rename backup file (tanpa .json):", defaultName);
+        
+        if (newName === null) return; 
+
+        const fileName = (newName.trim() || defaultName) + ".json";
         const data = JSON.stringify(watchlist);
         const blob = new Blob([data], {type: 'application/json'});
         const url = URL.createObjectURL(blob);
