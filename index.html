@@ -147,13 +147,7 @@ function handleLogoError(img, sym) {
     const S = sym.toUpperCase(); // Ganti nama jadi S aja biar ringkas
 
     const sources = [
-        `https://bin.bnbstatic.com/static/assets/logos/${S}.png`,           // 1. Binance (Paling Stabil)
-        `https://s1.bycsi.com/bybit/assets/tokens/colors/${s}.png`,        // 2. Bybit (Lengkap & Cepat)
-        `https://indodax.com/v2/logo/png/color/${s}.png`,                  // 3. Indodax (Wajib buat koin lokal/IDR)
-        `https://mexc-img.oss-cn-hangzhou.aliyuncs.com/static/token/${S}.png`, // 4. MEXC Jalur CDN (Lebih aman dari blok)
-        `https://www.gate.io/images/coin_icon/64/${s}.png`,                // 5. Gate.io (Banyak koin micin)
-        `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${s}.png`, // 6. GitHub (Cadangan 1)
-        `https://cryptoicons.org/api/color/${s}/400`                       // 7. CryptoIcons (Cadangan Terakhir)
+        `https://www.bybit.com/bybit-icons/coin/${S}.png`
     ];
 
     if (retry < sources.length) {
