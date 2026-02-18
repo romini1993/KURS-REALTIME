@@ -140,11 +140,9 @@
         const s = sym.toLowerCase();
         const upperS = sym.toUpperCase();
         
-        const sources = [
-            `https://www.bybit.com/bybit-icons/coin/${upperS}.png`,
-            `https://www.mexc.com/static/coin/${upperS}.png`,
-            `https://gate.io/images/coin_icon/64/${s}.png`,
-            `https://cryptoicons.org/api/color/${s}/400`
+const sources = [
+            `https://bin.bnbstatic.com/static/assets/logos/${S}.png`,           // 1. Binance
+            `https://s1.bycsi.com/bybit/assets/tokens/colors/${s}.png`,
         ];
 
         if (retry < sources.length) {
