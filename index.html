@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💱</text></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f172a%22/><text x=%225%22 y=%22.85em%22 font-size=%2280%22>💱</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>蝶</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f172a%22/><text x=%225%22 y=%22.85em%22 font-size=%2280%22>蝶</text></svg>">
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -52,10 +52,10 @@
 <body>
 <div class="container">
     <div class="header">
-        <div class="brand-center"><h2>💱 KURS</h2></div>
+        <div class="brand-center"><h2>蝶 KURS</h2></div>
         <div class="nav-bar">
             <div id="kurs-live" class="kurs-info">USD/IDR: Loading...</div>
-            <button class="refresh-btn" onclick="updateSemua()">🔄 Update</button>
+            <button class="refresh-btn" onclick="updateSemua()">売 Update</button>
         </div>
     </div>
     <div id="fixed-list">
@@ -74,14 +74,14 @@
         </div>
         <div style="height:10px"></div>
         <div class="coin-card" style="border-left: 4px solid #f7931a;">
-            <div class="logo-wrapper"><img src="https://coinicons-api.vercel.app/api/icon/btc" onerror="handleLogoError(this, 'BTC')"></div>
+            <div class="logo-wrapper"><img src="https://binance-docs.github.io/apidocs/spot/en/img/logos/btc.png" onerror="handleLogoError(this, 'BTC')"></div>
             <div class="info-group"><label>BTC</label><span id="price-btc" class="live-price">$0</span></div>
             <div class="input-box"><input type="text" id="btc" inputmode="decimal" placeholder="0" oninput="handleInput('btc')"></div>
             <span id="change-btc" class="price-change">--</span>
         </div>
         <div style="height:10px"></div>
         <div class="coin-card" style="border-left: 4px solid #627eea;">
-            <div class="logo-wrapper"><img src="https://coinicons-api.vercel.app/api/icon/eth" onerror="handleLogoError(this, 'ETH')"></div>
+            <div class="logo-wrapper"><img src="https://binance-docs.github.io/apidocs/spot/en/img/logos/eth.png" onerror="handleLogoError(this, 'ETH')"></div>
             <div class="info-group"><label>ETH</label><span id="price-eth" class="live-price">$0</span></div>
             <div class="input-box"><input type="text" id="eth" inputmode="decimal" placeholder="0" oninput="handleInput('eth')"></div>
             <span id="change-eth" class="price-change">--</span>
@@ -95,8 +95,8 @@
         </div>
         
         <div class="backup-section">
-            <button class="btn-backup" onclick="exportData()">📥 Backup List</button>
-            <button class="btn-backup" onclick="importData()">📤 Restore List</button>
+            <button class="btn-backup" onclick="exportData()">踏 Backup List</button>
+            <button class="btn-backup" onclick="importData()">豆 Restore List</button>
         </div>
 
         <div id="status" class="status-info">Ready, Bro!</div>
@@ -138,14 +138,19 @@
     function handleLogoError(img, sym) {
         const retry = parseInt(img.getAttribute('data-retry') || "0");
         const s = sym.toLowerCase();
+        const upperS = sym.toUpperCase();
+        
+        // Urutan Fallback: Bybit -> MEXC -> Gate -> CryptoIcons
         const sources = [
-            `https://coinicons-api.vercel.app/api/icon/${s}`,
-            `https://assets.coincap.io/assets/icons/${s}@2x.png`,
-            `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${s}.png`
+            `https://www.bybit.com/bybit-icons/coin/${upperS}.png`,
+            `https://www.mexc.com/static/coin/${upperS}.png`,
+            `https://gate.io/images/coin_icon/64/${s}.png`,
+            `https://cryptoicons.org/api/color/${s}/400`
         ];
-        if (retry < sources.length - 1) {
+
+        if (retry < sources.length) {
             img.setAttribute('data-retry', retry + 1);
-            img.src = sources[retry + 1];
+            img.src = sources[retry];
         } else {
             const wrapper = img.parentElement;
             wrapper.style.background = '#000';
@@ -258,13 +263,13 @@
                 <div class="coin-row">
                     <div class="coin-card">
                         <div class="logo-wrapper">
-                            <img src="https://coinicons-api.vercel.app/api/icon/${id}" onerror="handleLogoError(this, '${sym}')">
+                            <img src="https://binance-docs.github.io/apidocs/spot/en/img/logos/${id}.png" onerror="handleLogoError(this, '${sym}')">
                         </div>
                         <div class="info-group"><label>${sym}</label><span class="live-price">${formatPriceDisplay(p)}</span></div>
                         <div class="input-box"><input type="text" id="${id}" inputmode="decimal" placeholder="0" oninput="handleInput('${id}')"></div>
                         <span class="price-change ${c >= 0 ? 'up' : 'down'}">${c >= 0 ? '+' : ''}${c.toFixed(2)}%</span>
                     </div>
-                    <div class="delete-btn-outside" onclick="removeCoin('${s}')">×</div>
+                    <div class="delete-btn-outside" onclick="removeCoin('${s}')">ﾃ/div>
                 </div>`;
         });
     }
