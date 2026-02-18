@@ -135,25 +135,32 @@
         } catch(e) { console.log("Kurs offline"); }
     }
 
-    function handleLogoError(img, sym) {
-        const retry = parseInt(img.getAttribute('data-retry') || "0");
-        const s = sym.toLowerCase();
-        const upperS = sym.toUpperCase();
-        
-const sources = [
-            `https://www.mexc.com/static/coin/${upperS}.png`
-        ];
-
-        if (retry < sources.length) {
-            img.setAttribute('data-retry', retry + 1);
-            img.src = sources[retry];
-        } else {
-            const wrapper = img.parentElement;
-            wrapper.style.background = '#000';
-            wrapper.innerHTML = `<span style="font-size:12px; font-weight:bold; color:var(--accent);">${sym.substring(0,2).toUpperCase()}</span>`;
-        }
+function handleLogoError(img, sym) {
+    // 1. Pengaman buat Rupiah
+    if (sym === 'IDR') {
+        img.parentElement.innerHTML = `<div class="logo-initial" style="background:#4ade80; color:#0f172a">RP</div>`;
+        return;
     }
 
+    const retry = parseInt(img.getAttribute('data-retry') || "0");
+    const s = sym.toLowerCase(); // Buat Indodax (huruf kecil)
+    const S = sym.toUpperCase(); // Ganti nama jadi S aja biar ringkas
+
+    const sources = [
+        `https://bin.bnbstatic.com/static/assets/logos/${S}.png`, // Pake S
+        `https://indodax.com/v2/logo/png/color/${s}.png`         // Pake s
+    ];
+
+    if (retry < sources.length) {
+        img.setAttribute('data-retry', retry + 1);
+        img.src = sources[retry];
+    } else {
+        // Fallback kalau dua-duanya zonk
+        const wrapper = img.parentElement;
+        wrapper.style.background = '#000';
+        wrapper.innerHTML = `<span style="font-size:12px; font-weight:bold; color:var(--accent);">${sym.substring(0,2).toUpperCase()}</span>`;
+    }
+}
     function formatWithCommas(val) {
         if (!val) return "";
         let parts = val.toString().split(".");
