@@ -140,7 +140,6 @@
         const s = sym.toLowerCase();
         const upperS = sym.toUpperCase();
         
-        // Urutan Fallback: Bybit -> MEXC -> Gate -> CryptoIcons
         const sources = [
             `https://www.bybit.com/bybit-icons/coin/${upperS}.png`,
             `https://www.mexc.com/static/coin/${upperS}.png`,
@@ -269,7 +268,7 @@
                         <div class="input-box"><input type="text" id="${id}" inputmode="decimal" placeholder="0" oninput="handleInput('${id}')"></div>
                         <span class="price-change ${c >= 0 ? 'up' : 'down'}">${c >= 0 ? '+' : ''}${c.toFixed(2)}%</span>
                     </div>
-                    <div class="delete-btn-outside" onclick="removeCoin('${s}')">ﾃ/div>
+                    <div class="delete-btn-outside" onclick="removeCoin('${s}')">&times;</div>
                 </div>`;
         });
     }
