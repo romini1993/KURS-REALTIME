@@ -120,7 +120,26 @@
     let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
     let lastSource = 'idr'; let lastRawValue = "";
 
-    window.onload = async () => { await fetchKurs(); fetchAllPrices(); };
+    window.onload = async () => { 
+        // Langsung hajar ganti link logo Binance pas web dibuka biar gak muter
+        document.querySelectorAll('img').forEach(img => {
+            if (img.src.includes('binance-docs')) {
+                // Ambil simbol koin dari onerror (misal: 'BTC')
+                const onclickAttr = img.getAttribute('onerror');
+                if (onclickAttr) {
+                    const match = onclickAttr.match(/'([^']+)'/);
+                    if (match) {
+                        const s = match[1].toLowerCase();
+                        img.src = `https://icon.staticimgs.com/images/coin_icon/64/${s}.png`;
+                    }
+                }
+            }
+        });
+
+        await fetchKurs(); 
+        fetchAllPrices(); 
+    };
+
     async function updateSemua() { await fetchKurs(); await fetchAllPrices(); }
 
     async function fetchKurs() {
@@ -265,7 +284,8 @@ function handleLogoError(img, sym) {
                 <div class="coin-row">
                     <div class="coin-card">
                         <div class="logo-wrapper">
-                           <img src="https://icon.staticimgs.com/images/coin_icon/64/${id}.png" onerror="handleLogoError(this, '${sym}')">
+                           // Ganti baris yang ada binance-docs jadi ini:
+<img src="https://icon.staticimgs.com/images/coin_icon/64/${id}.png" onerror="handleLogoError(this, '${sym}')">
                         </div>
                         <div class="info-group"><label>${sym}</label><span class="live-price">${formatPriceDisplay(p)}</span></div>
                         <div class="input-box"><input type="text" id="${id}" inputmode="decimal" placeholder="0" oninput="handleInput('${id}')"></div>
