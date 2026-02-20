@@ -14,8 +14,8 @@
         html, body { overscroll-behavior-y: contain; background: var(--bg); color: var(--text); margin: 0; padding: 0; height: 100%; }
         body { display: flex; justify-content: center; overflow-x: hidden; }
         
-        /* PADDING BOTTOM DITAMBAH biar koin terbawah gak ketutup panel melayang */
-        .container { width: 100%; max-width: 420px; padding: 20px 15px 220px 15px; position: relative; }
+        /* PADDING BOTTOM biar koin terbawah gak ketutup panel */
+        .container { width: 100%; max-width: 420px; padding: 20px 15px 230px 15px; position: relative; }
         
         .header { position: sticky; top: 0; background: var(--bg); z-index: 1000; padding-bottom: 10px; }
         .brand-center h2 { margin: 0; font-size: 24px; color: var(--accent); text-align: center; letter-spacing: 1px; padding: 5px 0; }
@@ -29,7 +29,7 @@
         .logo-wrapper { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 1px solid #475569; background: #000; display: flex; align-items: center; justify-content: center; }
         .logo-wrapper img { width: 100%; height: 100%; object-fit: contain; padding: 2px; }
         
-        .info-group { display: flex; flex-direction: column; min-width: 80px; flex-shrink: 0; }
+        .info-group { display: flex; flex-direction: column; min-width: 85px; flex-shrink: 0; }
         .info-group label { font-size: 11px; color: var(--subtext); font-weight: bold; }
         .live-price { font-size: 10px; font-weight: bold; color: var(--accent); white-space: nowrap; }
 
@@ -39,7 +39,6 @@
         .price-change { font-size: 11px; font-weight: 800; min-width: 50px; text-align: right; }
         .up { color: var(--up); } .down { color: var(--down); }
 
-        /* FIXED BOTTOM PANEL - Background lebih solid biar gak tembus pandang */
         .floating-bottom { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 420px; background: #1e293b; padding: 15px 15px 25px 15px; border-top: 2px solid var(--accent); border-radius: 20px 20px 0 0; z-index: 2000; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); }
         .add-box { display: flex; gap: 8px; margin-bottom: 12px; }
         .add-box input { background: var(--bg); border: 1px solid #334155; color: white !important; }
@@ -56,7 +55,7 @@
 <div class="container">
     <div class="header">
         <div class="brand-center"><h2>KURS PRECISION</h2></div>
-        <input type="text" id="filter-input" class="search-filter" placeholder="Cari di list (BTC, USD, SGD...)" oninput="filterList()">
+        <input type="text" id="filter-input" class="search-filter" placeholder="Cari (BTC, USD, SGD...)" oninput="filterList()">
         <div class="nav-bar">
             <div id="kurs-live" class="kurs-info">USD/IDR: Loading...</div>
             <button class="refresh-btn" onclick="updateSemua()">Update</button>
@@ -75,30 +74,31 @@
             <div class="input-box"><input type="text" id="usd" inputmode="decimal" placeholder="0" oninput="handleInput('usd')"></div>
         </div>
 
-        <div id="fiat-extra"></div>
+        <div id="fiat-list"></div>
 
         <hr>
 
-        <div class="coin-card" style="border-left: 4px solid #f7931a;">
-            <div class="logo-wrapper"><img id="img-btc" onerror="handleLogoError(this, 'BTC')"></div>
-            <div class="info-group"><label>BTC</label><span id="price-btc" class="live-price">$0</span></div>
-            <div class="input-box"><input type="text" id="btc" inputmode="decimal" placeholder="0" oninput="handleInput('btc')"></div>
-            <span id="change-btc" class="price-change">--</span>
+        <div id="crypto-list">
+            <div class="coin-card" style="border-left: 4px solid #f7931a;">
+                <div class="logo-wrapper"><img id="img-btc" onerror="handleLogoError(this, 'BTC')"></div>
+                <div class="info-group"><label>BTC</label><span id="price-btc" class="live-price">$0</span></div>
+                <div class="input-box"><input type="text" id="btc" inputmode="decimal" placeholder="0" oninput="handleInput('btc')"></div>
+                <span id="change-btc" class="price-change">--</span>
+            </div>
+            <div class="coin-card" style="border-left: 4px solid #627eea;">
+                <div class="logo-wrapper"><img id="img-eth" onerror="handleLogoError(this, 'ETH')"></div>
+                <div class="info-group"><label>ETH</label><span id="price-eth" class="live-price">$0</span></div>
+                <div class="input-box"><input type="text" id="eth" inputmode="decimal" placeholder="0" oninput="handleInput('eth')"></div>
+                <span id="change-eth" class="price-change">--</span>
+            </div>
+            <div id="watchlist"></div>
         </div>
-        <div class="coin-card" style="border-left: 4px solid #627eea;">
-            <div class="logo-wrapper"><img id="img-eth" onerror="handleLogoError(this, 'ETH')"></div>
-            <div class="info-group"><label>ETH</label><span id="price-eth" class="live-price">$0</span></div>
-            <div class="input-box"><input type="text" id="eth" inputmode="decimal" placeholder="0" oninput="handleInput('eth')"></div>
-            <span id="change-eth" class="price-change">--</span>
-        </div>
-        
-        <div id="watchlist"></div>
     </div>
 </div>
 
 <div class="floating-bottom">
     <div class="add-box">
-        <input type="text" id="search-input" placeholder="Tambah Koin (SUI, XRP, SOL...)">
+        <input type="text" id="search-input" placeholder="Simbol (SUI, SOL, XRP...)">
         <button class="add-btn" onclick="addCoin()">Tambah</button>
     </div>
     <div class="backup-row">
@@ -109,24 +109,26 @@
 </div>
 
 <script>
+    // POKONYA: Ini daftar mata uang yang mau lu taruh di bawah USD
+    const fiatConfig = {
+        SGD: { flag: 'singapore', name: 'Sing Dollar' },
+        JPY: { flag: 'japan', name: 'Yen Japan' },
+        EUR: { flag: 'european-union', name: 'Euro' }
+    };
+
     let usdToIdr = parseFloat(localStorage.getItem('last_usd_idr')) || 16200;
-    let otherFiat = { SGD: 0, JPY: 0, EUR: 0 };
     let prices = { BTC: 0, ETH: 0 };
     let changes = { BTC: 0, ETH: 0 };
+    let fiatRates = { SGD: 0, JPY: 0, EUR: 0 }; // Penampung rate IDR
     let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
 
     function getLogoUrl(sym) {
         return `https://www.kucoin.com/_next/image?url=https://assets.static-up.com/cms/media/3v4isL7YV6S60nu9h6Tf8oO7XW6703O1656515856755/${sym.toUpperCase()}.png&w=64&q=75`;
     }
 
-    function safeSetSrc(imgId, newSrc) {
-        const img = document.getElementById(imgId);
-        if (img && img.src !== newSrc) img.src = newSrc;
-    }
-
     window.onload = async () => {
-        safeSetSrc('img-btc', getLogoUrl('BTC'));
-        safeSetSrc('img-eth', getLogoUrl('ETH'));
+        document.getElementById('img-btc').src = getLogoUrl('BTC');
+        document.getElementById('img-eth').src = getLogoUrl('ETH');
         await fetchKurs();
         fetchAllPrices();
     };
@@ -136,29 +138,27 @@
             const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=usd-coin,singapore-dollar,japanese-yen,euro&vs_currencies=idr');
             const d = await r.json();
             usdToIdr = d['usd-coin'].idr;
-            otherFiat.SGD = d['singapore-dollar'].idr;
-            otherFiat.JPY = d['japanese-yen'].idr;
-            otherFiat.EUR = d['euro'].idr;
+            fiatRates.SGD = d['singapore-dollar'].idr;
+            fiatRates.JPY = d['japanese-yen'].idr;
+            fiatRates.EUR = d['euro'].idr;
             
             document.getElementById('kurs-live').innerText = `USD/IDR: ${usdToIdr.toLocaleString('id-ID')}`;
-            renderFiatExtra();
-        } catch(e) { console.log("Kurs Error"); }
+            renderFiatList();
+        } catch(e) { console.log("Gagal ambil kurs"); }
     }
 
-    function renderFiatExtra() {
-        const container = document.getElementById('fiat-extra');
-        const list = [
-            {id: 'sgd', label: 'SGD', flag: 'singapore', price: otherFiat.SGD},
-            {id: 'jpy', label: 'JPY', flag: 'japan', price: otherFiat.JPY},
-            {id: 'eur', label: 'EUR', flag: 'european-union', price: otherFiat.EUR}
-        ];
-        container.innerHTML = list.map(f => `
-            <div class="coin-card" style="border-left: 4px solid #94a3b8;">
-                <div class="logo-wrapper"><img src="https://api.iconify.design/emojione:flag-for-${f.flag}.svg"></div>
-                <div class="info-group"><label>${f.label}</label><span class="live-price">Rp ${f.price.toLocaleString('id-ID')}</span></div>
-                <div class="input-box"><input type="text" id="${f.id}" inputmode="decimal" placeholder="0" oninput="handleInput('${f.id}')"></div>
-            </div>
-        `).join('');
+    function renderFiatList() {
+        const container = document.getElementById('fiat-list');
+        container.innerHTML = "";
+        Object.keys(fiatConfig).forEach(sym => {
+            const rate = fiatRates[sym] || 0;
+            container.innerHTML += `
+                <div class="coin-card" style="border-left: 4px solid #94a3b8;">
+                    <div class="logo-wrapper"><img src="https://api.iconify.design/emojione:flag-for-${fiatConfig[sym].flag}.svg"></div>
+                    <div class="info-group"><label>${sym}</label><span class="live-price">Rp ${rate.toLocaleString('id-ID')}</span></div>
+                    <div class="input-box"><input type="text" id="${sym.toLowerCase()}" inputmode="decimal" placeholder="0" oninput="handleInput('${sym.toLowerCase()}')"></div>
+                </div>`;
+        });
     }
 
     function handleLogoError(img, sym) {
@@ -183,7 +183,7 @@
             } catch(e) {}
         }
         renderWatchlist();
-        updateFixedUI();
+        updateCryptoUI();
         document.getElementById('status').innerText = "Update: " + new Date().toLocaleTimeString();
     }
 
@@ -192,16 +192,17 @@
         watchlist.forEach(s => {
             const sym = s.toUpperCase();
             const id = s.toLowerCase();
+            // POKONYA: Kalau simbol ada di fiatConfig, jangan muncul di watchlist bawah
+            if (fiatConfig[sym]) return;
+
             let row = document.getElementById(`row-${id}`);
             const p = prices[sym] || 0;
             const c = changes[sym] || 0;
-            const logo = getLogoUrl(sym);
-
             if (!row) {
                 container.innerHTML += `
                     <div class="coin-row" id="row-${id}">
                         <div class="coin-card">
-                            <div class="logo-wrapper"><img src="${logo}" id="img-${id}" onerror="handleLogoError(this, '${sym}')"></div>
+                            <div class="logo-wrapper"><img src="${getLogoUrl(sym)}" id="img-${id}" onerror="handleLogoError(this, '${sym}')"></div>
                             <div class="info-group"><label>${sym}</label><span id="p-${id}" class="live-price">$${p.toLocaleString()}</span></div>
                             <div class="input-box"><input type="text" id="${id}" inputmode="decimal" placeholder="0" oninput="handleInput('${id}')"></div>
                             <span id="c-${id}" class="price-change ${c >= 0 ? 'up' : 'down'}">${c >= 0 ? '+' : ''}${c.toFixed(2)}%</span>
@@ -213,7 +214,6 @@
                 const cEl = document.getElementById(`c-${id}`);
                 cEl.innerText = `${c >= 0 ? '+' : ''}${c.toFixed(2)}%`;
                 cEl.className = `price-change ${c >= 0 ? 'up' : 'down'}`;
-                safeSetSrc(`img-${id}`, logo);
             }
         });
     }
@@ -228,37 +228,33 @@
         
         let val = parseFloat(raw);
         let baseUsd = 0;
+        let ID = id.toUpperCase();
         
+        // LOGIKA KALKULASI POKONYA
         if (id === 'idr') baseUsd = val / usdToIdr;
         else if (id === 'usd') baseUsd = val;
-        else if (otherFiat[id.toUpperCase()]) baseUsd = (val * otherFiat[id.toUpperCase()]) / usdToIdr;
-        else baseUsd = val * (prices[id.toUpperCase()] || 0);
+        else if (fiatRates[ID]) baseUsd = (val * fiatRates[ID]) / usdToIdr;
+        else baseUsd = val * (prices[ID] || 0);
 
-        const fields = ['idr', 'usd', 'sgd', 'jpy', 'eur', 'btc', 'eth', ...watchlist.map(w => w.toLowerCase())];
-        fields.forEach(f => {
+        // Update Field Lain
+        const allFields = ['idr', 'usd', 'sgd', 'jpy', 'eur', 'btc', 'eth', ...watchlist.map(w => w.toLowerCase())];
+        allFields.forEach(f => {
             if (f === id) return;
             let target = document.getElementById(f);
             if (!target) return;
 
             let res = 0;
+            let targetID = f.toUpperCase();
             if (f === 'idr') res = baseUsd * usdToIdr;
             else if (f === 'usd') res = baseUsd;
-            else if (otherFiat[f.toUpperCase()]) res = (baseUsd * usdToIdr) / otherFiat[f.toUpperCase()];
-            else res = baseUsd / (prices[f.toUpperCase()] || 1);
+            else if (fiatRates[targetID]) res = (baseUsd * usdToIdr) / fiatRates[targetID];
+            else res = baseUsd / (prices[targetID] || 1);
 
-            target.value = (f === 'idr' || f === 'jpy') ? Math.round(res).toLocaleString() : res.toLocaleString(undefined, {maximumFractionDigits: 5});
+            target.value = (f === 'idr' || f === 'jpy') ? Math.round(res).toLocaleString() : res.toLocaleString(undefined, {maximumFractionDigits: 4});
         });
     }
 
-    function filterList() {
-        let q = document.getElementById('filter-input').value.toLowerCase();
-        document.querySelectorAll('.coin-row, #main-list > .coin-card').forEach(card => {
-            let label = card.querySelector('label')?.innerText.toLowerCase() || "";
-            card.style.display = label.includes(q) ? "flex" : "none";
-        });
-    }
-
-    function updateFixedUI() {
+    function updateCryptoUI() {
         ['btc', 'eth'].forEach(s => {
             const sym = s.toUpperCase();
             document.getElementById(`price-${s}`).innerText = "$" + (prices[sym] || 0).toLocaleString();
@@ -266,6 +262,14 @@
             const c = changes[sym] || 0;
             cEl.innerText = (c >= 0 ? '+' : '') + c.toFixed(2) + '%';
             cEl.className = 'price-change ' + (c >= 0 ? 'up' : 'down');
+        });
+    }
+
+    function filterList() {
+        let q = document.getElementById('filter-input').value.toLowerCase();
+        document.querySelectorAll('.coin-card, .coin-row').forEach(card => {
+            let label = card.querySelector('label')?.innerText.toLowerCase() || "";
+            card.style.display = label.includes(q) ? "flex" : "none";
         });
     }
 
