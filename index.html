@@ -14,25 +14,24 @@
         html, body { overscroll-behavior-y: contain; background: var(--bg); color: var(--text); margin: 0; padding: 0; height: 100%; }
         body { display: flex; justify-content: center; overflow-x: hidden; }
         
-        .container { width: 100%; max-width: 420px; padding: 20px 15px 150px 15px; }
+        /* PADDING BOTTOM biar gak ketutup panel bawah */
+        .container { width: 100%; max-width: 420px; padding: 20px 15px 180px 15px; }
         
-        /* Header & Search */
-        .header { position: sticky; top: 0; background: var(--bg); z-index: 10; padding-bottom: 15px; }
-        .brand-center h2 { margin: 0; font-size: 28px; color: var(--accent); text-align: center; letter-spacing: 1px; padding: 10px 0; }
-        .search-filter { width: 100%; background: var(--card); border: 1px solid #334155; border-radius: 10px; padding: 10px; color: white; margin-bottom: 10px; outline: none; }
+        .header { position: sticky; top: 0; background: var(--bg); z-index: 10; padding-bottom: 10px; }
+        .brand-center h2 { margin: 0; font-size: 24px; color: var(--accent); text-align: center; letter-spacing: 1px; padding: 5px 0; }
+        .search-filter { width: 100%; background: var(--card); border: 1px solid #334155; border-radius: 10px; padding: 10px; color: white; margin-bottom: 10px; outline: none; font-size: 14px; }
 
         .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .kurs-info { font-size: 11px; color: var(--subtext); background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 8px; border: 1px solid #334155; }
         .refresh-btn { background: var(--card); border: 1px solid var(--accent); color: var(--accent); padding: 8px 14px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: bold; }
 
-        /* Coin Cards */
-        .coin-card { background: var(--card); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; border: 1px solid #334155; height: 62px; margin-bottom: 10px; transition: opacity 0.3s; }
+        .coin-card { background: var(--card); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; border: 1px solid #334155; height: 62px; margin-bottom: 10px; }
         .logo-wrapper { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 1px solid #475569; background: #000; display: flex; align-items: center; justify-content: center; }
         .logo-wrapper img { width: 100%; height: 100%; object-fit: contain; padding: 2px; }
         
-        .info-group { display: flex; flex-direction: column; min-width: 70px; flex-shrink: 0; }
+        .info-group { display: flex; flex-direction: column; min-width: 80px; flex-shrink: 0; }
         .info-group label { font-size: 11px; color: var(--subtext); font-weight: bold; }
-        .live-price { font-size: 10px; font-weight: bold; color: var(--accent); }
+        .live-price { font-size: 10px; font-weight: bold; color: var(--accent); white-space: nowrap; }
 
         .input-box { flex: 1; min-width: 0; }
         input { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid #334155; border-radius: 6px; color: white; font-size: 16px; font-weight: bold; outline: none; padding: 6px 8px; }
@@ -40,15 +39,15 @@
         .price-change { font-size: 11px; font-weight: 800; min-width: 50px; text-align: right; }
         .up { color: var(--up); } .down { color: var(--down); }
 
-        /* Floating Bottom Section */
-        .floating-bottom { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 420px; background: #1e293bfa; padding: 15px; border-top: 1px solid var(--accent); border-radius: 20px 20px 0 0; backdrop-filter: blur(10px); z-index: 100; }
+        /* FIXED BOTTOM PANEL */
+        .floating-bottom { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 420px; background: #1e293be6; padding: 15px; border-top: 2px solid var(--accent); border-radius: 20px 20px 0 0; backdrop-filter: blur(10px); z-index: 100; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
         .add-box { display: flex; gap: 8px; margin-bottom: 10px; }
-        .add-box input { background: var(--bg); border: 1px solid #334155; }
+        .add-box input { background: var(--bg); border: 1px solid #334155; color: white !important; }
         .add-btn { background: var(--accent); border: none; color: #0f172a; border-radius: 8px; padding: 0 15px; font-weight: bold; cursor: pointer; }
         .backup-row { display: flex; gap: 10px; justify-content: center; }
         .btn-mini { background: transparent; border: 1px solid #475569; color: var(--subtext); padding: 5px 12px; border-radius: 6px; font-size: 10px; font-weight: bold; cursor: pointer; }
         
-        .delete-btn { color: #f87171; font-size: 20px; cursor: pointer; margin-left: 5px; }
+        .delete-btn { color: #f87171; font-size: 22px; cursor: pointer; margin-left: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -58,7 +57,7 @@
         <div class="brand-center"><h2>KURS PRECISION</h2></div>
         <input type="text" id="filter-input" class="search-filter" placeholder="Cari koin di list..." oninput="filterList()">
         <div class="nav-bar">
-            <div id="kurs-live" class="kurs-info">USD/IDR: Fetching...</div>
+            <div id="kurs-live" class="kurs-info">USD/IDR: Loading...</div>
             <button class="refresh-btn" onclick="updateSemua()">Update</button>
         </div>
     </div>
@@ -74,6 +73,7 @@
             <div class="info-group"><label>USD</label><span class="live-price">Dollar</span></div>
             <div class="input-box"><input type="text" id="usd" inputmode="decimal" placeholder="0" oninput="handleInput('usd')"></div>
         </div>
+
         <div id="fiat-extra"></div>
 
         <hr style="border: 0; border-top: 1px dashed #334155; margin: 15px 0;">
@@ -97,7 +97,7 @@
 
 <div class="floating-bottom">
     <div class="add-box">
-        <input type="text" id="search-input" placeholder="Tambah Simbol (SUI, SOL, XRP...)">
+        <input type="text" id="search-input" placeholder="Simbol (SUI, SOL, XRP...)">
         <button class="add-btn" onclick="addCoin()">Tambah</button>
     </div>
     <div class="backup-row">
@@ -113,25 +113,18 @@
     let prices = { BTC: 0, ETH: 0 };
     let changes = { BTC: 0, ETH: 0 };
     let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
-    let lastSource = 'idr'; let lastRawValue = "";
 
     function getLogoUrl(sym) {
-        const s = sym.toLowerCase();
         const S = sym.toUpperCase();
-        // Link utama elu bro
         return `https://www.kucoin.com/_next/image?url=https://assets.static-up.com/cms/media/3v4isL7YV6S60nu9h6Tf8oO7XW6703O1656515856755/${S}.png&w=64&q=75`;
     }
 
-    // ANTI KEDIP: Fungsi buat update src gambar hanya jika beda
     function safeSetSrc(imgId, newSrc) {
         const img = document.getElementById(imgId);
-        if (img && img.src !== newSrc) {
-            img.src = newSrc;
-        }
+        if (img && img.src !== newSrc) img.src = newSrc;
     }
 
     window.onload = async () => {
-        // Init logo BTC & ETH tanpa kedip
         safeSetSrc('img-btc', getLogoUrl('BTC'));
         safeSetSrc('img-eth', getLogoUrl('ETH'));
         await fetchKurs();
@@ -155,30 +148,28 @@
     function renderFiatExtra() {
         const container = document.getElementById('fiat-extra');
         const list = [
-            {id: 'sgd', label: 'SGD', name: 'Sing Dollar', flag: 'singapore'},
-            {id: 'jpy', label: 'JPY', name: 'Yen Japan', flag: 'japan'},
-            {id: 'eur', label: 'EUR', name: 'Euro', flag: 'european-union'}
+            {id: 'sgd', label: 'SGD', flag: 'singapore', price: otherFiat.SGD},
+            {id: 'jpy', label: 'JPY', flag: 'japan', price: otherFiat.JPY},
+            {id: 'eur', label: 'EUR', flag: 'european-union', price: otherFiat.EUR}
         ];
         container.innerHTML = list.map(f => `
             <div class="coin-card" style="border-left: 4px solid #94a3b8;">
                 <div class="logo-wrapper"><img src="https://api.iconify.design/emojione:flag-for-${f.flag}.svg"></div>
-                <div class="info-group"><label>${f.label}</label><span class="live-price">${f.name}</span></div>
+                <div class="info-group"><label>${f.label}</label><span class="live-price">Rp ${f.price.toLocaleString('id-ID')}</span></div>
                 <div class="input-box"><input type="text" id="${f.id}" inputmode="decimal" placeholder="0" oninput="handleInput('${f.id}')"></div>
             </div>
         `).join('');
     }
 
     function handleLogoError(img, sym) {
-        const s = sym.toLowerCase();
-        // Backup link biar gak muncul huruf doang
-        img.src = `https://icon.staticimgs.com/images/coin_icon/64/${s}.png`;
+        img.src = `https://icon.staticimgs.com/images/coin_icon/64/${sym.toLowerCase()}.png`;
         img.onerror = () => {
             img.parentElement.innerHTML = `<span style="font-size:10px; font-weight:bold;">${sym.substring(0,2)}</span>`;
         };
     }
 
     async function fetchAllPrices() {
-        document.getElementById('status').innerText = "Updating Prices...";
+        document.getElementById('status').innerText = "Updating...";
         const symbols = ['BTC', 'ETH', ...watchlist];
         for (let s of symbols) {
             try {
@@ -186,14 +177,14 @@
                 const db = await rb.json();
                 if(db.result?.list?.[0]) {
                     const t = db.result.list[0];
-                    prices[s] = parseFloat(t.lastPrice);
-                    changes[s] = ((prices[s] - parseFloat(t.prevPrice24h)) / parseFloat(t.prevPrice24h)) * 100;
+                    prices[s.toUpperCase()] = parseFloat(t.lastPrice);
+                    changes[s.toUpperCase()] = ((parseFloat(t.lastPrice) - parseFloat(t.prevPrice24h)) / parseFloat(t.prevPrice24h)) * 100;
                 }
             } catch(e) {}
         }
         renderWatchlist();
         updateFixedUI();
-        document.getElementById('status').innerText = "Last Update: " + new Date().toLocaleTimeString();
+        document.getElementById('status').innerText = "Update: " + new Date().toLocaleTimeString();
     }
 
     function renderWatchlist() {
@@ -218,7 +209,6 @@
                         </div>
                     </div>`;
             } else {
-                // Update tanpa kedip
                 document.getElementById(`p-${id}`).innerText = `$${p.toLocaleString()}`;
                 const cEl = document.getElementById(`c-${id}`);
                 cEl.innerText = `${c >= 0 ? '+' : ''}${c.toFixed(2)}%`;
@@ -229,25 +219,26 @@
     }
 
     function handleInput(id) {
-        let raw = document.getElementById(id).value.replace(/,/g, '');
+        let elSelf = document.getElementById(id);
+        let raw = elSelf.value.replace(/,/g, '');
         if (raw === "") {
             document.querySelectorAll('input').forEach(i => { if(i.id !== 'search-input' && i.id !== 'filter-input') i.value = ""; });
             return;
         }
         
-        // Hitung nilai dasar dalam USD
+        let val = parseFloat(raw);
         let baseUsd = 0;
-        if (id === 'idr') baseUsd = raw / usdToIdr;
-        else if (id === 'usd') baseUsd = raw;
-        else if (otherFiat[id.toUpperCase()]) baseUsd = (raw * otherFiat[id.toUpperCase()]) / usdToIdr;
-        else baseUsd = raw * (prices[id.toUpperCase()] || 0);
+        
+        if (id === 'idr') baseUsd = val / usdToIdr;
+        else if (id === 'usd') baseUsd = val;
+        else if (otherFiat[id.toUpperCase()]) baseUsd = (val * otherFiat[id.toUpperCase()]) / usdToIdr;
+        else baseUsd = val * (prices[id.toUpperCase()] || 0);
 
-        // Update SEMUA field
         const fields = ['idr', 'usd', 'sgd', 'jpy', 'eur', 'btc', 'eth', ...watchlist.map(w => w.toLowerCase())];
         fields.forEach(f => {
             if (f === id) return;
-            let el = document.getElementById(f);
-            if (!el) return;
+            let target = document.getElementById(f);
+            if (!target) return;
 
             let res = 0;
             if (f === 'idr') res = baseUsd * usdToIdr;
@@ -255,13 +246,8 @@
             else if (otherFiat[f.toUpperCase()]) res = (baseUsd * usdToIdr) / otherFiat[f.toUpperCase()];
             else res = baseUsd / (prices[f.toUpperCase()] || 1);
 
-            el.value = (f === 'idr' || f === 'jpy') ? Math.round(res).toLocaleString() : res.toLocaleString(undefined, {maximumFractionDigits: 4});
+            target.value = (f === 'idr' || f === 'jpy') ? Math.round(res).toLocaleString() : res.toLocaleString(undefined, {maximumFractionDigits: 5});
         });
-        
-        // Format input sendiri
-        let elSelf = document.getElementById(id);
-        let cursor = elSelf.selectionStart;
-        elSelf.value = parseFloat(raw).toLocaleString();
     }
 
     function filterList() {
@@ -275,20 +261,22 @@
     function updateFixedUI() {
         ['btc', 'eth'].forEach(s => {
             const sym = s.toUpperCase();
-            document.getElementById(`price-${s}`).innerText = "$" + (prices[sym] || 0).toLocaleString();
-            const cEl = document.getElementById(`change-${s}`);
+            const p = prices[sym] || 0;
             const c = changes[sym] || 0;
+            document.getElementById(`price-${s}`).innerText = "$" + p.toLocaleString();
+            const cEl = document.getElementById(`change-${s}`);
             cEl.innerText = (c >= 0 ? '+' : '') + c.toFixed(2) + '%';
             cEl.className = 'price-change ' + (c >= 0 ? 'up' : 'down');
         });
     }
 
     function addCoin() {
-        let s = document.getElementById('search-input').value.toUpperCase().trim();
+        let input = document.getElementById('search-input');
+        let s = input.value.toUpperCase().trim();
         if (!s || watchlist.includes(s)) return;
         watchlist.push(s);
         localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
-        document.getElementById('search-input').value = "";
+        input.value = "";
         fetchAllPrices();
     }
 
@@ -303,9 +291,8 @@
     async function updateSemua() { await fetchKurs(); await fetchAllPrices(); }
     function exportData() {
         const data = JSON.stringify(watchlist);
-        const blob = new Blob([data], {type: 'application/json'});
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
+        a.href = URL.createObjectURL(new Blob([data], {type: 'application/json'}));
         a.download = `KURS_BACKUP.json`;
         a.click();
     }
@@ -314,8 +301,8 @@
         input.type = 'file';
         input.onchange = e => {
             const reader = new FileReader();
-            reader.onload = event => {
-                watchlist = JSON.parse(event.target.result);
+            reader.onload = ev => {
+                watchlist = JSON.parse(ev.target.result);
                 localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
                 location.reload();
             };
