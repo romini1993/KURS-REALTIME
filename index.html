@@ -121,25 +121,12 @@
     let lastSource = 'idr'; let lastRawValue = "";
 
     window.onload = async () => { 
-        // Langsung hajar ganti link logo Binance pas web dibuka biar gak muter
-        document.querySelectorAll('img').forEach(img => {
-            if (img.src.includes('binance-docs')) {
-                // Ambil simbol koin dari onerror (misal: 'BTC')
-                const onclickAttr = img.getAttribute('onerror');
-                if (onclickAttr) {
-                    const match = onclickAttr.match(/'([^']+)'/);
-                    if (match) {
-                        const s = match[1].toLowerCase();
-                        img.src = `https://icon.staticimgs.com/images/coin_icon/64/${s}.png`;
-                    }
-                }
-            }
-        });
+    // Baris sakti: Langsung bikin semua logo error biar fungsi di atas jalan
+    document.querySelectorAll('.logo-wrapper img').forEach(img => img.src = ""); 
 
-        await fetchKurs(); 
-        fetchAllPrices(); 
-    };
-
+    await fetchKurs(); 
+    fetchAllPrices(); 
+};
     async function updateSemua() { await fetchKurs(); await fetchAllPrices(); }
 
     async function fetchKurs() {
@@ -155,25 +142,25 @@
     }
 
 function handleLogoError(img, sym) {
-    // 1. Pengaman buat Rupiah
     if (sym === 'IDR') {
         img.parentElement.innerHTML = `<div class="logo-initial" style="background:#4ade80; color:#0f172a">RP</div>`;
         return;
     }
 
     const retry = parseInt(img.getAttribute('data-retry') || "0");
-    const s = sym.toLowerCase(); // Buat Indodax (huruf kecil)
-    const S = sym.toUpperCase(); // Ganti nama jadi S aja biar ringkas
+    const s = sym.toLowerCase();
+    const S = sym.toUpperCase();
 
+    // TEMPAT CEK ICON: Pindahin link yang mau elu tes ke urutan PALING ATAS
     const sources = [
-        `https://icon.staticimgs.com/images/coin_icon/64/${S}.png`
+        `https://assets.static-up.com/cms/media/3v4isL7YV6S60nu9h6Tf8oO7XW6703O1656515856755/${S}.png`
     ];
 
     if (retry < sources.length) {
         img.setAttribute('data-retry', retry + 1);
-        img.src = sources[retry];
+        img.src = sources[retry]; // Nyoba link satu-satu sesuai urutan
     } else {
-        // Fallback kalau dua-duanya zonk
+        // Fallback kalau semua link di atas zonk
         const wrapper = img.parentElement;
         wrapper.style.background = '#000';
         wrapper.innerHTML = `<span style="font-size:12px; font-weight:bold; color:var(--accent);">${sym.substring(0,2).toUpperCase()}</span>`;
