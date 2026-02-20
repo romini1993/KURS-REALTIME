@@ -14,18 +14,18 @@
         html, body { overscroll-behavior-y: contain; background: var(--bg); color: var(--text); margin: 0; padding: 0; height: 100%; }
         body { display: flex; justify-content: center; overflow-x: hidden; }
         
-        /* PADDING BOTTOM biar gak ketutup panel bawah */
-        .container { width: 100%; max-width: 420px; padding: 20px 15px 180px 15px; }
+        /* PADDING BOTTOM DITAMBAH biar koin terbawah gak ketutup panel melayang */
+        .container { width: 100%; max-width: 420px; padding: 20px 15px 220px 15px; position: relative; }
         
-        .header { position: sticky; top: 0; background: var(--bg); z-index: 10; padding-bottom: 10px; }
+        .header { position: sticky; top: 0; background: var(--bg); z-index: 1000; padding-bottom: 10px; }
         .brand-center h2 { margin: 0; font-size: 24px; color: var(--accent); text-align: center; letter-spacing: 1px; padding: 5px 0; }
-        .search-filter { width: 100%; background: var(--card); border: 1px solid #334155; border-radius: 10px; padding: 10px; color: white; margin-bottom: 10px; outline: none; font-size: 14px; }
+        .search-filter { width: 100%; background: var(--card); border: 1px solid #334155; border-radius: 10px; padding: 12px; color: white; margin-bottom: 10px; outline: none; font-size: 14px; }
 
         .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .kurs-info { font-size: 11px; color: var(--subtext); background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 8px; border: 1px solid #334155; }
         .refresh-btn { background: var(--card); border: 1px solid var(--accent); color: var(--accent); padding: 8px 14px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: bold; }
 
-        .coin-card { background: var(--card); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; border: 1px solid #334155; height: 62px; margin-bottom: 10px; }
+        .coin-card { background: var(--card); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; border: 1px solid #334155; height: 62px; margin-bottom: 10px; position: relative; }
         .logo-wrapper { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 1px solid #475569; background: #000; display: flex; align-items: center; justify-content: center; }
         .logo-wrapper img { width: 100%; height: 100%; object-fit: contain; padding: 2px; }
         
@@ -39,15 +39,16 @@
         .price-change { font-size: 11px; font-weight: 800; min-width: 50px; text-align: right; }
         .up { color: var(--up); } .down { color: var(--down); }
 
-        /* FIXED BOTTOM PANEL */
-        .floating-bottom { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 420px; background: #1e293be6; padding: 15px; border-top: 2px solid var(--accent); border-radius: 20px 20px 0 0; backdrop-filter: blur(10px); z-index: 100; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
-        .add-box { display: flex; gap: 8px; margin-bottom: 10px; }
+        /* FIXED BOTTOM PANEL - Background lebih solid biar gak tembus pandang */
+        .floating-bottom { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 420px; background: #1e293b; padding: 15px 15px 25px 15px; border-top: 2px solid var(--accent); border-radius: 20px 20px 0 0; z-index: 2000; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); }
+        .add-box { display: flex; gap: 8px; margin-bottom: 12px; }
         .add-box input { background: var(--bg); border: 1px solid #334155; color: white !important; }
         .add-btn { background: var(--accent); border: none; color: #0f172a; border-radius: 8px; padding: 0 15px; font-weight: bold; cursor: pointer; }
         .backup-row { display: flex; gap: 10px; justify-content: center; }
-        .btn-mini { background: transparent; border: 1px solid #475569; color: var(--subtext); padding: 5px 12px; border-radius: 6px; font-size: 10px; font-weight: bold; cursor: pointer; }
+        .btn-mini { background: transparent; border: 1px solid #475569; color: var(--subtext); padding: 6px 14px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
         
         .delete-btn { color: #f87171; font-size: 22px; cursor: pointer; margin-left: 5px; font-weight: bold; }
+        hr { border: 0; border-top: 1px dashed #334155; margin: 15px 0; }
     </style>
 </head>
 <body>
@@ -55,7 +56,7 @@
 <div class="container">
     <div class="header">
         <div class="brand-center"><h2>KURS PRECISION</h2></div>
-        <input type="text" id="filter-input" class="search-filter" placeholder="Cari koin di list..." oninput="filterList()">
+        <input type="text" id="filter-input" class="search-filter" placeholder="Cari di list (BTC, USD, SGD...)" oninput="filterList()">
         <div class="nav-bar">
             <div id="kurs-live" class="kurs-info">USD/IDR: Loading...</div>
             <button class="refresh-btn" onclick="updateSemua()">Update</button>
@@ -76,7 +77,7 @@
 
         <div id="fiat-extra"></div>
 
-        <hr style="border: 0; border-top: 1px dashed #334155; margin: 15px 0;">
+        <hr>
 
         <div class="coin-card" style="border-left: 4px solid #f7931a;">
             <div class="logo-wrapper"><img id="img-btc" onerror="handleLogoError(this, 'BTC')"></div>
@@ -97,7 +98,7 @@
 
 <div class="floating-bottom">
     <div class="add-box">
-        <input type="text" id="search-input" placeholder="Simbol (SUI, SOL, XRP...)">
+        <input type="text" id="search-input" placeholder="Tambah Koin (SUI, XRP, SOL...)">
         <button class="add-btn" onclick="addCoin()">Tambah</button>
     </div>
     <div class="backup-row">
@@ -115,8 +116,7 @@
     let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
 
     function getLogoUrl(sym) {
-        const S = sym.toUpperCase();
-        return `https://www.kucoin.com/_next/image?url=https://assets.static-up.com/cms/media/3v4isL7YV6S60nu9h6Tf8oO7XW6703O1656515856755/${S}.png&w=64&q=75`;
+        return `https://www.kucoin.com/_next/image?url=https://assets.static-up.com/cms/media/3v4isL7YV6S60nu9h6Tf8oO7XW6703O1656515856755/${sym.toUpperCase()}.png&w=64&q=75`;
     }
 
     function safeSetSrc(imgId, newSrc) {
@@ -261,10 +261,9 @@
     function updateFixedUI() {
         ['btc', 'eth'].forEach(s => {
             const sym = s.toUpperCase();
-            const p = prices[sym] || 0;
-            const c = changes[sym] || 0;
-            document.getElementById(`price-${s}`).innerText = "$" + p.toLocaleString();
+            document.getElementById(`price-${s}`).innerText = "$" + (prices[sym] || 0).toLocaleString();
             const cEl = document.getElementById(`change-${s}`);
+            const c = changes[sym] || 0;
             cEl.innerText = (c >= 0 ? '+' : '') + c.toFixed(2) + '%';
             cEl.className = 'price-change ' + (c >= 0 ? 'up' : 'down');
         });
