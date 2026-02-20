@@ -29,8 +29,11 @@
         .refresh-btn:active { transform: scale(0.95); background: var(--accent); color: var(--bg); }
         .coin-row { position: relative; width: 100%; margin-bottom: 10px; }
         .coin-card { background: var(--card); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; border: 1px solid #334155; height: 62px; }
-        .logo-wrapper { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 1px solid #475569; background: #000; display: flex; align-items: center; justify-content: center; }
-        .logo-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* FIX: CSS Logo biar gak mendem */
+        .logo-wrapper { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 1px solid #475569; background: #000; display: flex; align-items: center; justify-content: center; }
+        .logo-wrapper img { width: 100%; height: 100%; object-fit: contain; padding: 2px; }
+        
         .info-group { display: flex; flex-direction: column; min-width: 70px; flex-shrink: 0; }
         .info-group label { font-size: 11px; color: var(--subtext); font-weight: bold; text-transform: uppercase; }
         .live-price { font-size: 10px; font-weight: bold; color: var(--accent); white-space: nowrap; }
@@ -44,7 +47,6 @@
         .search-box input { background: var(--card); border: 1px solid #334155; border-radius: 10px; padding: 12px; color: white !important; width: 100%; font-size: 14px; }
         .add-btn { background: var(--accent); border: none; color: #0f172a; border-radius: 10px; padding: 0 15px; font-weight: bold; cursor: pointer; }
         .status-info { font-size: 11px; color: var(--subtext); text-align: center; margin-top: 10px; }
-        
         .backup-section { display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
         .btn-backup { background: transparent; border: 1px solid #334155; color: var(--subtext); padding: 5px 10px; border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold; }
     </style>
@@ -74,14 +76,14 @@
         </div>
         <div style="height:10px"></div>
         <div class="coin-card" style="border-left: 4px solid #f7931a;">
-            <div class="logo-wrapper"><img src="https://icon.staticimgs.com/images/coin_icon/64/btc.png" onerror="handleLogoError(this, 'BTC')"></div>
+            <div class="logo-wrapper"><img src="" id="logo-btc" onerror="handleLogoError(this, 'BTC')"></div>
             <div class="info-group"><label>BTC</label><span id="price-btc" class="live-price">$0</span></div>
             <div class="input-box"><input type="text" id="btc" inputmode="decimal" placeholder="0" oninput="handleInput('btc')"></div>
             <span id="change-btc" class="price-change">--</span>
         </div>
         <div style="height:10px"></div>
         <div class="coin-card" style="border-left: 4px solid #627eea;">
-           <div class="logo-wrapper"><img src="https://icon.staticimgs.com/images/coin_icon/64/eth.png" onerror="handleLogoError(this, 'ETH')"></div>
+            <div class="logo-wrapper"><img src="" id="logo-eth" onerror="handleLogoError(this, 'ETH')"></div>
             <div class="info-group"><label>ETH</label><span id="price-eth" class="live-price">$0</span></div>
             <div class="input-box"><input type="text" id="eth" inputmode="decimal" placeholder="0" oninput="handleInput('eth')"></div>
             <span id="change-eth" class="price-change">--</span>
@@ -93,41 +95,62 @@
             <input type="text" id="search-input" placeholder="Tambah koin (misal: SUI, SOL, XRP)">
             <button class="add-btn" onclick="addCoin()">Tambah</button>
         </div>
-        
         <div class="backup-section">
-            <button class="btn-backup" onclick="exportData()">踏 Backup List</button>
-            <button class="btn-backup" onclick="importData()">豆 Restore List</button>
+            <button class="btn-backup" onclick="exportData()">踏 Backup</button>
+            <button class="btn-backup" onclick="importData()">豆 Restore</button>
         </div>
-
         <div id="status" class="status-info">Ready, Bro!</div>
     </div>
 </div>
 
 <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js').then(reg => {
-                console.log('PWA Registered');
-            }).catch(err => {
-                console.log('PWA Registration Failed', err);
-            });
-        });
-    }
-
     let usdToIdr = parseFloat(localStorage.getItem('last_usd_idr')) || 16000; 
     let prices = { BTC: 0, ETH: 0 };
     let changes = { BTC: 0, ETH: 0 }; 
     let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
     let lastSource = 'idr'; let lastRawValue = "";
 
-    window.onload = async () => { 
-    // Baris sakti: Langsung bikin semua logo error biar fungsi di atas jalan
-    document.querySelectorAll('.logo-wrapper img').forEach(img => img.src = ""); 
+    // PUSAT KENDALI LOGO - Ganti link UTAMA di sini aja bro buat ngetes
+    function getPrimaryLogo(sym) {
+        const s = sym.toLowerCase();
+        const S = sym.toUpperCase();
+        // Sekarang pake KuCoin sebagai tes utama elu
+        return `https://www.kucoin.com/_next/image?url=https://assets.static-up.com/cms/media/3v4isL7YV6S60nu9h6Tf8oO7XW6703O1656515856755/${S}.png&w=64&q=75`;
+    }
 
-    await fetchKurs(); 
-    fetchAllPrices(); 
-};
-    async function updateSemua() { await fetchKurs(); await fetchAllPrices(); }
+    window.onload = async () => { 
+        // Paksa semua logo pake link pusat kendali pas buka web
+        document.querySelectorAll('.logo-wrapper img').forEach(img => {
+            const sym = img.getAttribute('onerror')?.match(/'([^']+)'/)?.[1];
+            if (sym && sym !== 'IDR') img.src = getPrimaryLogo(sym);
+        });
+        await fetchKurs(); 
+        fetchAllPrices(); 
+    };
+
+    function handleLogoError(img, sym) {
+        if (sym === 'IDR') {
+            img.parentElement.innerHTML = `<div class="logo-initial" style="background:#4ade80; color:#0f172a">RP</div>`;
+            return;
+        }
+        const retry = parseInt(img.getAttribute('data-retry') || "0");
+        const s = sym.toLowerCase();
+        const S = sym.toUpperCase();
+
+        // DAFTAR CADANGAN (Kalau link utama di atas gagal)
+        const sources = [
+            `https://icon.staticimgs.com/images/coin_icon/64/${s}.png`,
+            `https://gate.io/images/coin_icon/64/${s}.png`
+        ];
+
+        if (retry < sources.length) {
+            img.setAttribute('data-retry', retry + 1);
+            img.src = sources[retry];
+        } else {
+            const wrapper = img.parentElement;
+            wrapper.innerHTML = `<span style="font-size:12px; font-weight:bold; color:var(--accent);">${sym.substring(0,2).toUpperCase()}</span>`;
+        }
+    }
 
     async function fetchKurs() {
         try {
@@ -139,42 +162,6 @@
                 document.getElementById('kurs-live').innerText = `USD/IDR: ${new Intl.NumberFormat('id-ID').format(usdToIdr)}`;
             }
         } catch(e) { console.log("Kurs offline"); }
-    }
-
-function handleLogoError(img, sym) {
-    if (sym === 'IDR') {
-        img.parentElement.innerHTML = `<div class="logo-initial" style="background:#4ade80; color:#0f172a">RP</div>`;
-        return;
-    }
-
-    const retry = parseInt(img.getAttribute('data-retry') || "0");
-    const s = sym.toLowerCase();
-    const S = sym.toUpperCase();
-
-    // TEMPAT CEK ICON: Pindahin link yang mau elu tes ke urutan PALING ATAS
-    const sources = [
-        `https://www.kucoin.com/_next/image?url=https://assets.static-up.com/cms/media/3v4isL7YV6S60nu9h6Tf8oO7XW6703O1656515856755/${S}.png`
-    ];
-
-    if (retry < sources.length) {
-        img.setAttribute('data-retry', retry + 1);
-        img.src = sources[retry]; // Nyoba link satu-satu sesuai urutan
-    } else {
-        // Fallback kalau semua link di atas zonk
-        const wrapper = img.parentElement;
-        wrapper.style.background = '#000';
-        wrapper.innerHTML = `<span style="font-size:12px; font-weight:bold; color:var(--accent);">${sym.substring(0,2).toUpperCase()}</span>`;
-    }
-}
-    function formatWithCommas(val) {
-        if (!val) return "";
-        let parts = val.toString().split(".");
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        return parts.join(".");
-    }
-
-    function formatPriceDisplay(p) {
-        return "$" + p.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: (p < 1 ? 6 : 2)});
     }
 
     function handleInput(id) {
@@ -196,21 +183,15 @@ function handleLogoError(img, sym) {
     function calculateKurs(source, rawVal) {
         let val = parseFloat(rawVal) || 0;
         let baseUsd = (source === 'idr') ? val / usdToIdr : (source === 'usd') ? val : val * (prices[source.toUpperCase()] || 0);
-        
         const allFields = ['idr', 'usd', 'btc', 'eth', ...watchlist.map(s => s.toLowerCase())];
         allFields.forEach(f => {
             if (f !== source) {
                 let targetEl = document.getElementById(f);
                 if (!targetEl) return;
                 let res = (f === 'idr') ? baseUsd * usdToIdr : (f === 'usd') ? baseUsd : baseUsd / (prices[f.toUpperCase()] || 1);
-                
-                if (f === 'idr') {
-                    targetEl.value = formatWithCommas(Math.round(res).toString());
-                } else {
-                    let dec = 2;
-                    if (res < 0.0001) dec = 8;
-                    else if (res < 0.01) dec = 6;
-                    else if (res < 1) dec = 4;
+                if (f === 'idr') targetEl.value = formatWithCommas(Math.round(res).toString());
+                else {
+                    let dec = (res < 0.01) ? 6 : 2;
                     targetEl.value = formatWithCommas(res.toFixed(dec).replace(/\.?0+$/, ""));
                 }
             }
@@ -222,27 +203,16 @@ function handleLogoError(img, sym) {
         const symbols = ['BTC', 'ETH', ...watchlist];
         for (let s of symbols) {
             try {
-                let found = false;
                 const rb = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${s.toUpperCase()}USDT`);
                 const db = await rb.json();
                 if(db.result?.list?.[0]) {
                     const t = db.result.list[0];
                     prices[s] = parseFloat(t.lastPrice);
                     changes[s] = ((prices[s] - parseFloat(t.prevPrice24h)) / parseFloat(t.prevPrice24h)) * 100;
-                    found = true;
-                }
-                if(!found) {
-                    const rs = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${s.toUpperCase()}USDT`);
-                    const ds = await rs.json();
-                    if(ds.lastPrice) {
-                        prices[s] = parseFloat(ds.lastPrice);
-                        changes[s] = parseFloat(ds.priceChangePercent);
-                    }
                 }
             } catch(e) {}
         }
         renderWatchlist(); updateFixedUI();
-        if (lastRawValue) calculateKurs(lastSource, lastRawValue);
         document.getElementById('status').innerText = "Last Update: " + new Date().toLocaleTimeString();
     }
 
@@ -251,7 +221,7 @@ function handleLogoError(img, sym) {
             let pEl = document.getElementById(`price-${s.toLowerCase()}`);
             let cEl = document.getElementById(`change-${s.toLowerCase()}`);
             if (prices[s] && pEl) {
-                pEl.innerText = formatPriceDisplay(prices[s]);
+                pEl.innerText = "$" + prices[s].toLocaleString();
                 cEl.innerText = (changes[s] >= 0 ? '+' : '') + changes[s].toFixed(2) + '%';
                 cEl.className = 'price-change ' + (changes[s] >= 0 ? 'up' : 'down');
             }
@@ -260,21 +230,17 @@ function handleLogoError(img, sym) {
 
     function renderWatchlist() {
         let container = document.getElementById('watchlist'); 
-        if (!container) return;
         container.innerHTML = "";
         watchlist.forEach(s => {
             const sym = s.toUpperCase();
+            const id = s.toLowerCase();
             const p = prices[sym] || 0;
             const c = changes[sym] || 0;
-            const id = s.toLowerCase();
             container.innerHTML += `
                 <div class="coin-row">
                     <div class="coin-card">
-                        <div class="logo-wrapper">
-                           // Ganti baris yang ada binance-docs jadi ini:
-<img src="https://icon.staticimgs.com/images/coin_icon/64/${id}.png" onerror="handleLogoError(this, '${sym}')">
-                        </div>
-                        <div class="info-group"><label>${sym}</label><span class="live-price">${formatPriceDisplay(p)}</span></div>
+                        <div class="logo-wrapper"><img src="${getPrimaryLogo(sym)}" onerror="handleLogoError(this, '${sym}')"></div>
+                        <div class="info-group"><label>${sym}</label><span class="live-price">$${p.toLocaleString()}</span></div>
                         <div class="input-box"><input type="text" id="${id}" inputmode="decimal" placeholder="0" oninput="handleInput('${id}')"></div>
                         <span class="price-change ${c >= 0 ? 'up' : 'down'}">${c >= 0 ? '+' : ''}${c.toFixed(2)}%</span>
                     </div>
@@ -300,48 +266,36 @@ function handleLogoError(img, sym) {
         }
     }
 
-    function exportData() {
-        const now = new Date();
-        const dateStr = now.getFullYear().toString() + 
-                        (now.getMonth() + 1).toString().padStart(2, '0') + 
-                        now.getDate().toString().padStart(2, '0') + "_" +
-                        now.getHours().toString().padStart(2, '0') +
-                        now.getMinutes().toString().padStart(2, '0') +
-                        now.getSeconds().toString().padStart(2, '0');
-        
-        const defaultName = `KURS_${dateStr}`;
-        const newName = prompt("Rename backup file (tanpa .json):", defaultName);
-        
-        if (newName === null) return; 
+    function formatWithCommas(val) {
+        if (!val) return "";
+        let parts = val.toString().split(".");
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        return parts.join(".");
+    }
 
-        const fileName = (newName.trim() || defaultName) + ".json";
+    async function updateSemua() { await fetchKurs(); await fetchAllPrices(); }
+    
+    // Backup & Restore (Tetap sama)
+    function exportData() {
         const data = JSON.stringify(watchlist);
         const blob = new Blob([data], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
+        a.href = URL.createObjectURL(blob);
+        a.download = `KURS_BACKUP.json`;
         a.click();
     }
 
     function importData() {
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = '.json';
         input.onchange = e => {
-            const file = e.target.files[0];
             const reader = new FileReader();
             reader.onload = event => {
-                try {
-                    const imported = JSON.parse(event.target.result);
-                    if (Array.isArray(imported)) {
-                        watchlist = imported;
-                        localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
-                        location.reload();
-                    } else { alert("File nggak valid, Bro!"); }
-                } catch(e) { alert("Gagal baca file!"); }
+                watchlist = JSON.parse(event.target.result);
+                localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
+                location.reload();
             };
-            reader.readAsText(file);
+            reader.readAsText(e.target.files[0]);
         };
         input.click();
     }
